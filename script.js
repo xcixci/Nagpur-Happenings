@@ -28,6 +28,11 @@ const NH_CONFIG = {
   // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
   GOATCOUNTER_CODE: 'nagpurhappenings',
 
+  // Show "N visits since <date>" in the footer. Needs "Allow adding visitor counts
+  // on your website" switched on in GoatCounter's settings. Set to false to hide.
+  SHOW_VISIT_COUNT: true,
+  VISIT_COUNT_SINCE: '31 Oct 2026',
+
   // How long a visitor's browser reuses downloaded events before asking again.
   CACHE_MINUTES: 10,
 
@@ -383,6 +388,24 @@ const NH_CONFIG = {
     script.src = 'https://gc.zgo.at/count.js';
     script.setAttribute('data-goatcounter', 'https://' + code + '.goatcounter.com/count');
     document.head.appendChild(script);
+  }
+
+  // Public visit count in the footer (site total from GoatCounter)
+  async function showVisitCount() {
+    const code = text(CONFIG.GOATCOUNTER_CODE).toLowerCase();
+    if (!CONFIG.SHOW_VISIT_COUNT || !/^[a-z0-9-]+$/.test(code) || !els.visits) return;
+    try {
+      const res = await fetch('https://' + code + '.goatcounter.com/counter/TOTAL.json', { cache: 'no-store' });
+      if (!res.ok) return; // setting not switched on yet, or no data
+      const data = await res.json();
+      const count = text(data && data.count);
+      if (!/^[\d,.\s]+$/.test(count) || count.replace(/\D/g, '') === '0') return;
+      const since = text(CONFIG.VISIT_COUNT_SINCE);
+      els.visits.textContent = count.trim() + ' visits' + (since ? ' since ' + since : '');
+      els.visits.hidden = false;
+    } catch (e) {
+      /* counter unavailable: show nothing */
+    }
   }
 
   // Counts a click, e.g. track('register', ev) → "register-NH-002".
@@ -1261,6 +1284,7 @@ const NH_CONFIG = {
       contactLink: byId('contact-link'),
       contactItem: byId('contact-item'),
       creator: byId('creator'),
+      visits: byId('visits'),
     });
 
     buildWeekdays();
@@ -1269,6 +1293,7 @@ const NH_CONFIG = {
     applyLinks();
     renderCreator();
     loadCounter();
+    showVisitCount();
     pendingEventId = eventIdFromHash();
     window.addEventListener('hashchange', () => {
       const id = eventIdFromHash();

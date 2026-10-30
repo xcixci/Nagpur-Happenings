@@ -398,6 +398,7 @@ img { max-width: 100%; }
 .footer__name { font-family: var(--serif); font-size: 1.625rem; line-height: 1.1; }
 .footer__tagline { margin-top: .3rem; font-family: var(--serif); font-style: italic; color: #D9DDCF; }
 .footer__place { margin-top: .6rem; font-size: .9375rem; color: #F5B97F; }
+.footer__visits { margin-top: .35rem; font-size: .9375rem; color: #D9DDCF; font-variant-numeric: tabular-nums; }
 
 .creator { display: flex; align-items: center; gap: .85rem; }
 .creator__text { display: grid; gap: .1rem; }
