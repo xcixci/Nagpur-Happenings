@@ -16,7 +16,8 @@
 
 // ---------------- Settings ----------------
 
-// Name of the tab that holds your events.
+// Name of the tab that holds your events. If no tab has this name, the script
+// uses the first tab with Title, Date and Status headers.
 var SHEET_NAME = 'Events';
 
 // true: cancelled events are sent too (shown as "Cancelled" on the calendar,
@@ -99,8 +100,8 @@ function onEdit(e) {
 function buildFeed_() {
   var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) throw new Error('No spreadsheet found. Open the script from the sheet (Extensions → Apps Script) or set SPREADSHEET_ID.');
-  var sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) throw new Error('There is no tab named "' + SHEET_NAME + '".');
+  var sheet = ss.getSheetByName(SHEET_NAME) || findEventsSheet_(ss);
+  if (!sheet) throw new Error('There is no tab named "' + SHEET_NAME + '", and no other tab has Title, Date and Status headers in row 1.');
 
   var tz = ss.getSpreadsheetTimeZone() || 'Asia/Kolkata';
   var range = sheet.getDataRange();
@@ -137,6 +138,20 @@ function feed_(events, tz) {
     count: events.length,
     events: events
   };
+}
+
+// Fallback when no tab is called "Events": use the first tab whose row 1 has
+// Title, Date and Status. (Form response tabs have no Status column, so they
+// are never picked by accident.)
+function findEventsSheet_(ss) {
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var lastCol = sheets[i].getLastColumn();
+    if (lastCol < 1) continue;
+    var cols = mapColumns_(sheets[i].getRange(1, 1, 1, lastCol).getValues()[0]);
+    if (cols.title !== undefined && cols.date !== undefined && cols.status !== undefined) return sheets[i];
+  }
+  return null;
 }
 
 function mapColumns_(headerRow) {
