@@ -6,7 +6,7 @@
    ===================================================================== */
 const NH_CONFIG = {
   // Your Google Apps Script web app URL. It ends in /exec. (README, step 2)
-  EVENTS_API_URL: '',
+  EVENTS_API_URL: 'https://script.google.com/macros/s/AKfycbwqxucqiby_yPb-PREPUuUM-xuuCesWCwIa2pAC9jnoia4jUWKnJeNGI8mDHH4sAO-XyA/exec',
 
   // Public link to your Google Form for event submissions. (README, step 4)
   SUBMIT_FORM_URL: '',
