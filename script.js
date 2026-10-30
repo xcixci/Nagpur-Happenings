@@ -22,7 +22,7 @@ const NH_CONFIG = {
   CREATOR_INSTAGRAM: 'arinjayxci',
   CREATOR_SITE_URL: 'https://xci.cx',
   // Your photo, e.g. 'assets/arinjay.jpg' (square works best). Empty shows your initial.
-  CREATOR_PHOTO: '',
+  CREATOR_PHOTO: 'assets/arinjay.jpg',
 
   // Free visit counter from goatcounter.com: paste your code, e.g. 'nagpurhappenings'
   // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
@@ -447,24 +447,22 @@ const NH_CONFIG = {
     if (!name) return;
     const handle = creatorHandle();
     const site = safeUrl(CONFIG.CREATOR_SITE_URL);
-    const links = [];
-    if (handle) {
-      links.push(h('a', {
-        href: 'https://www.instagram.com/' + handle + '/', target: '_blank', rel: 'noopener noreferrer',
+    // The photo is the Instagram link
+    const photo = handle
+      ? h('a', {
+        class: 'creator__photo', href: 'https://www.instagram.com/' + handle + '/', target: '_blank', rel: 'noopener noreferrer',
+        'aria-label': name + ' on Instagram (@' + handle + ')', title: name + ' on Instagram (@' + handle + ')',
         onclick: () => track('creator-instagram'),
-      }, 'Instagram @' + handle));
-    }
-    if (site) {
-      links.push(h('a', {
-        href: site, target: '_blank', rel: 'noopener noreferrer',
-        onclick: () => track('creator-site'),
-      }, site.replace(/^https?:\/\//, '').replace(/\/$/, '')));
-    }
+      }, avatar(false))
+      : avatar(false);
     els.creator.replaceChildren(
-      avatar(false),
+      photo,
       h('div', { class: 'creator__text' },
         h('p', { class: 'creator__by' }, 'Made by ' + name),
-        links.length ? h('p', { class: 'creator__links' }, links) : null));
+        site ? h('a', {
+          class: 'creator__site', href: site, target: '_blank', rel: 'noopener noreferrer',
+          onclick: () => track('creator-site'),
+        }, site.replace(/^https?:\/\//, '').replace(/\/$/, '')) : null));
     els.creator.hidden = false;
   }
 
@@ -1158,8 +1156,14 @@ const NH_CONFIG = {
     return safeUrl(CONFIG.SUBMIT_FORM_URL);
   }
 
+  // Until a Google Form is set, "Submit" opens an Instagram message instead.
+  function submitDmUrl() {
+    const handle = creatorHandle();
+    return handle ? 'https://ig.me/m/' + handle : '';
+  }
+
   function submitInlineLink(label) {
-    const url = submitUrl();
+    const url = submitUrl() || submitDmUrl();
     return url
       ? h('a', { href: url, target: '_blank', rel: 'noopener noreferrer' }, label)
       : h('a', { href: '#submit' }, label);
@@ -1167,15 +1171,18 @@ const NH_CONFIG = {
 
   function applyLinks() {
     const formUrl = submitUrl();
+    const dmUrl = formUrl ? '' : submitDmUrl();
     document.querySelectorAll('[data-submit-link]').forEach((link) => {
-      if (formUrl) {
-        link.href = formUrl;
+      if (formUrl || dmUrl) {
+        link.href = formUrl || dmUrl;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        link.addEventListener('click', () => track('submit-form'));
+        link.addEventListener('click', () => track(formUrl ? 'submit-form' : 'submit-dm'));
       }
     });
-    if (!formUrl) {
+    if (dmUrl) {
+      els.submitNote.textContent = 'Send your event details to @' + creatorHandle() + ' on Instagram. Every submission is reviewed before it appears on the calendar.';
+    } else if (!formUrl) {
       els.submitButton.removeAttribute('href');
       els.submitButton.setAttribute('aria-disabled', 'true');
       els.submitButton.setAttribute('role', 'link');
