@@ -22,7 +22,7 @@ const NH_CONFIG = {
   CREATOR_INSTAGRAM: 'arinjayxci',
   CREATOR_SITE_URL: 'https://xci.cx',
   // Your photo, e.g. 'assets/arinjay.jpg' (square works best). Empty shows your initial.
-  CREATOR_PHOTO: 'assets/arinjay.jpg',
+  CREATOR_PHOTO: '',
 
   // Free visit counter from goatcounter.com: paste your code, e.g. 'nagpurhappenings'
   // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
@@ -447,22 +447,31 @@ const NH_CONFIG = {
     if (!name) return;
     const handle = creatorHandle();
     const site = safeUrl(CONFIG.CREATOR_SITE_URL);
-    // The photo is the Instagram link
-    const photo = handle
-      ? h('a', {
-        class: 'creator__photo', href: 'https://www.instagram.com/' + handle + '/', target: '_blank', rel: 'noopener noreferrer',
-        'aria-label': name + ' on Instagram (@' + handle + ')', title: name + ' on Instagram (@' + handle + ')',
-        onclick: () => track('creator-instagram'),
-      }, avatar(false))
-      : avatar(false);
-    els.creator.replaceChildren(
+    const hasPhoto = Boolean(text(CONFIG.CREATOR_PHOTO));
+    const igUrl = handle ? 'https://www.instagram.com/' + handle + '/' : '';
+    // With a photo, the photo is the Instagram link; without one, a text link
+    const photo = hasPhoto
+      ? (igUrl
+        ? h('a', {
+          class: 'creator__photo', href: igUrl, target: '_blank', rel: 'noopener noreferrer',
+          'aria-label': name + ' on Instagram (@' + handle + ')', title: name + ' on Instagram (@' + handle + ')',
+          onclick: () => track('creator-instagram'),
+        }, avatar(false))
+        : avatar(false))
+      : null;
+    els.creator.replaceChildren(...[
       photo,
       h('div', { class: 'creator__text' },
         h('p', { class: 'creator__by' }, 'Made by ' + name),
-        site ? h('a', {
-          class: 'creator__site', href: site, target: '_blank', rel: 'noopener noreferrer',
-          onclick: () => track('creator-site'),
-        }, site.replace(/^https?:\/\//, '').replace(/\/$/, '')) : null));
+        h('p', { class: 'creator__links' },
+          !hasPhoto && igUrl
+            ? h('a', { href: igUrl, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('creator-instagram') }, 'Instagram @' + handle)
+            : null,
+          site ? h('a', {
+            class: 'creator__site', href: site, target: '_blank', rel: 'noopener noreferrer',
+            onclick: () => track('creator-site'),
+          }, site.replace(/^https?:\/\//, '').replace(/\/$/, '')) : null)),
+    ].filter(Boolean));
     els.creator.hidden = false;
   }
 
@@ -970,7 +979,7 @@ const NH_CONFIG = {
 
   function showInDialog(nodes) {
     const dialog = els.eventDialog;
-    els.dialogContent.replaceChildren(...nodes);
+    els.dialogContent.replaceChildren(...nodes.filter(Boolean));
     const wasOpen = dialog.open;
     openDialog(dialog);
     els.dialogContent.scrollTop = 0;
@@ -1051,6 +1060,10 @@ const NH_CONFIG = {
         ev.description.split(/\n\s*\n/).map((para) => h('p', null, para))));
     }
 
+    nodes.push(h('p', { class: 'dialog__disclaimer' },
+      'Listed for information only. Nagpur Happenings does not organise this event or handle bookings and payments. ' +
+      'Details can change, so confirm with the organiser before you go or pay.'));
+
     const copyBtn = h('button', { type: 'button', class: 'btn btn--line' }, 'Copy link');
     copyBtn.addEventListener('click', () => {
       copyToClipboard(eventLink(ev)).then(
@@ -1086,7 +1099,7 @@ const NH_CONFIG = {
     }
     if (changedLinks.length) {
       nodes.push(h('div', { class: 'changed' },
-        avatar(true),
+        text(CONFIG.CREATOR_PHOTO) ? avatar(true) : null,
         h('p', { class: 'changed__text' }, 'Something wrong or changed? Tell ' + (text(CONFIG.CREATOR_NAME) || 'us') + '.'),
         h('p', { class: 'changed__links' }, changedLinks)));
     }
