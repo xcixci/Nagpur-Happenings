@@ -491,12 +491,29 @@ const NH_CONFIG = {
   }
 
   let pendingEventId = '';
+  let viewChosenByVisitor = false;
+
+  // If nothing is left this month, open on the month of the next event
+  // (e.g. on 31 October with no more October events, show November).
+  function pickStartMonth() {
+    const now = nowInCity();
+    const upcoming = state.events.filter((ev) => ev.status === 'Published' && !hasEnded(ev, now));
+    if (!upcoming.length) return;
+    const thisMonth = now.y + '-' + pad(now.m + 1) + '-';
+    if (upcoming.some((ev) => ev.date.startsWith(thisMonth))) return;
+    const p = parseIso(upcoming[0].date);
+    state.view = { y: p.y, m: p.m };
+  }
 
   function openPendingEvent() {
     if (!pendingEventId || !state.loaded) return;
     const ev = state.events.find((e) => e.id === pendingEventId);
     pendingEventId = '';
-    if (!ev) return;
+    if (!ev) {
+      if (!viewChosenByVisitor) { pickStartMonth(); renderAll(); }
+      return;
+    }
+    viewChosenByVisitor = true;
     const p = parseIso(ev.date);
     state.view = { y: p.y, m: p.m };
     renderAll();
@@ -616,6 +633,7 @@ const NH_CONFIG = {
       state.days.get(date).push(name);
     });
     state.loaded = true;
+    if (!viewChosenByVisitor && !pendingEventId) pickStartMonth();
     renderAll();
     openPendingEvent();
   }
@@ -1178,6 +1196,7 @@ const NH_CONFIG = {
      Month navigation
      --------------------------------------------------------------- */
   function shiftMonth(delta) {
+    viewChosenByVisitor = true;
     let { y, m } = state.view;
     m += delta;
     if (m < 0) { m = 11; y -= 1; }
@@ -1187,6 +1206,7 @@ const NH_CONFIG = {
   }
 
   function goToday() {
+    viewChosenByVisitor = true;
     const now = nowInCity();
     state.view = { y: now.y, m: now.m };
     renderAll();
