@@ -26,7 +26,7 @@ const NH_CONFIG = {
 
   // Free visit counter from goatcounter.com: paste your code, e.g. 'nagpurhappenings'
   // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
-  GOATCOUNTER_CODE: '',
+  GOATCOUNTER_CODE: 'nagpurhappenings',
 
   // How long a visitor's browser reuses downloaded events before asking again.
   CACHE_MINUTES: 10,
