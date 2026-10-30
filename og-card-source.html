@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- Source for assets/og-card.png (the link preview image). Not used by the live site. -->
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="styles.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  .card { position: relative; width: 1200px; height: 630px; background: var(--orange); color: var(--ink); box-sizing: border-box; padding: 70px 96px; }
+  .card::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 330px;
+    background: url('assets/tiger-coat.svg') repeat-x right center / auto 100%;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 55%); mask-image: linear-gradient(to right, transparent, #000 55%); }
+  .card > * { position: relative; z-index: 1; }
+  .row { display: flex; align-items: flex-start; gap: 36px; }
+  .card .milestone { margin-top: 10px; }
+  .card .milestone { width: 96px; }
+  .card .milestone__body, .card .milestone__cap { stroke-width: 2.2; }
+  h1 { font: 400 104px/.98 var(--serif); letter-spacing: -0.02em; margin: 0; }
+  .lede { font: italic 400 42px/1.2 var(--serif); margin: 30px 0 0; }
+  .meta { font: 500 28px/1.3 var(--sans); margin-top: 22px; max-width: 700px; }
+</style></head>
+<body><div class="card">
+  <div class="row">
+    <svg class="milestone" viewBox="0 0 40 52" aria-hidden="true">
+      <path class="milestone__body" d="M4 51V20a16 16 0 0 1 32 0v31z"/>
+      <path class="milestone__cap" d="M4 21v-1a16 16 0 0 1 32 0v1z"/>
+      <text class="milestone__zero" x="20" y="45" text-anchor="middle">0</text>
+    </svg>
+    <h1>Nagpur<br>Happenings</h1>
+  </div>
+  <p class="lede">Discover what's happening in Nagpur.</p>
+  <p class="meta">Book clubs, board games, open mics, workshops, walks and more, on one calendar.</p>
+</div></body></html>

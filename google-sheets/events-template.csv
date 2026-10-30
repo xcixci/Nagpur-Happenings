@@ -1,0 +1,4 @@
+Event ID,Title,Category,Date,Start Time,End Time,Venue,Area,Description,Organiser Name,Organiser Contact,Registration URL,Ticket Price,Free or Paid,Cover Image URL,Status,Featured
+NH-001,Example: Book club evening,Books & Literature,2026-11-05,18:30,20:00,Venue name,Dharampeth,Short description of the event. Example row: replace or delete it.,Organiser name,hello@example.com,https://example.com/register,,Free,,Published,No
+NH-002,Example: Pottery workshop,Learning & Workshops,2026-11-18,18:00,20:00,Venue name,Wardhaman Nagar,Draft rows stay hidden until you change Status to Published.,Organiser name,https://example.com,https://example.com/tickets,800,Paid,,Draft,No
+NH-003,Example: Rooftop film screening,Music & Entertainment,2026-11-27,19:00,21:30,Venue name,Manish Nagar,Cancelled rows show as Cancelled on the calendar.,Organiser name,+91 98765 43210,,250,Paid,,Cancelled,No

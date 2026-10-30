@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nagpur Happenings: discover what's happening in Nagpur</title>
+  <meta name="description" content="A monthly calendar of book clubs, board games, chess meetups, open mics, workshops, music, walks and community events in Nagpur.">
+  <meta name="theme-color" content="#F08A2E">
+
+  <!-- Link preview (WhatsApp, Instagram, LinkedIn).
+       After GitHub Pages is on, replace YOUR-SITE-ADDRESS below with your real
+       site address, e.g. https://your-username.github.io/nagpur-happenings  (README, step 6) -->
+  <meta property="og:title" content="Nagpur Happenings">
+  <meta property="og:description" content="Discover what's happening in Nagpur: book clubs, board games, open mics, workshops, walks and more, on one calendar.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YOUR-SITE-ADDRESS/">
+  <meta property="og:image" content="https://YOUR-SITE-ADDRESS/assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/tiro-devanagari-marathi-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/mukta-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#calendar">Skip to the calendar</a>
+
+  <header class="masthead">
+    <div class="wrap masthead__inner">
+      <div class="masthead__brand">
+        <!-- Zero Mile milestone mark -->
+        <svg class="milestone" viewBox="0 0 40 52" aria-hidden="true" focusable="false">
+          <path class="milestone__body" d="M4 51V20a16 16 0 0 1 32 0v31z"/>
+          <path class="milestone__cap" d="M4 21v-1a16 16 0 0 1 32 0v1z"/>
+          <text class="milestone__zero" x="20" y="45" text-anchor="middle">0</text>
+        </svg>
+        <div>
+          <h1 class="masthead__title">Nagpur Happenings</h1>
+          <p class="masthead__tagline">Discover what's happening in Nagpur.</p>
+        </div>
+      </div>
+      <a class="btn btn--outline masthead__submit" href="#submit" data-submit-link>Submit an event</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="calendar-section wrap" id="calendar" aria-labelledby="month-title" tabindex="-1">
+      <div class="cal-toolbar">
+        <h2 class="cal-title" id="month-title" aria-live="polite">
+          <span class="cal-title__month" id="month-name">&nbsp;</span>
+          <span class="cal-title__year" id="month-year"></span>
+        </h2>
+        <div class="cal-nav">
+          <button type="button" class="icon-btn" id="prev-month" aria-label="Previous month">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="btn btn--small" id="today-btn">Today</button>
+          <button type="button" class="icon-btn" id="next-month" aria-label="Next month">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="filters" id="filters" role="group" aria-label="Filter events by category"></div>
+
+      <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+
+      <div class="cal" id="cal">
+        <ol class="cal__weekdays" id="weekdays" aria-hidden="true"></ol>
+        <ol class="cal__grid" id="grid" aria-label="Days of the month"></ol>
+      </div>
+      <p class="cal-note" id="cal-note" hidden></p>
+
+      <section class="agenda" id="agenda" aria-labelledby="agenda-title">
+        <h3 class="agenda__title" id="agenda-title">This month</h3>
+        <ol class="agenda__days" id="agenda-list"></ol>
+      </section>
+    </section>
+
+    <section class="upcoming wrap" id="upcoming" aria-labelledby="upcoming-title">
+      <h2 class="section-title" id="upcoming-title">Coming Up in Nagpur</h2>
+      <ol class="event-list" id="upcoming-list"></ol>
+      <p class="empty-note" id="upcoming-empty" hidden></p>
+    </section>
+
+    <section class="submit" id="submit" aria-labelledby="submit-title">
+      <div class="wrap submit__inner">
+        <h2 class="submit__title" id="submit-title">Organising an event in Nagpur?</h2>
+        <div class="submit__body">
+          <p class="submit__lede">Let more people discover it. Submit your event for consideration.</p>
+          <a class="btn btn--ink" id="submit-button" href="#submit" data-submit-link>Submit your event</a>
+          <p class="submit__note" id="submit-note">Every submission is reviewed before it appears on the calendar.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <div class="footer__brand">
+        <p class="footer__name">Nagpur Happenings</p>
+        <p class="footer__tagline">A little more happening in your city.</p>
+        <p class="footer__place">From Zero Mile, Nagpur. Nagpur first, more cities soon.</p>
+      </div>
+      <nav class="footer__nav" aria-label="Footer">
+        <ul>
+          <li><a href="#submit" data-submit-link>Submit an Event</a></li>
+          <li><button type="button" class="link-btn" id="about-btn">About</button></li>
+          <li id="contact-item"><a id="contact-link" href="#">Contact</a></li>
+          <li id="instagram-item"><a id="instagram-link" href="#" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+        </ul>
+      </nav>
+      <div class="creator" id="creator" hidden></div>
+      <p class="footer__disclaimer">Nagpur Happenings is an independent event discovery platform. Event information is provided by organisers and is subject to change. Please verify details before attending.</p>
+    </div>
+  </footer>
+
+  <!-- Event details / day list. Content is built safely in script.js -->
+  <dialog class="dialog" id="event-dialog" aria-labelledby="dialog-title">
+    <button type="button" class="dialog__close" data-close-dialog aria-label="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="dialog__content" id="dialog-content"></div>
+  </dialog>
+
+  <dialog class="dialog" id="about-dialog" aria-labelledby="about-title">
+    <button type="button" class="dialog__close" data-close-dialog aria-label="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="dialog__content">
+      <h2 class="dialog__title" id="about-title">About Nagpur Happenings</h2>
+      <p>Nagpur Happenings is an independent calendar of offline things to do in Nagpur: book clubs, board-game and chess meetups, open mics, theatre, music, workshops, talks, walks and community gatherings.</p>
+      <p>Organisers submit their events, and each one is reviewed before it is listed. Details can change, so check with the organiser before you head out.</p>
+      <p>It starts at Zero Mile, in the Orange City and Tiger Capital of India. Nagpur first, more cities soon.</p>
+    </div>
+  </dialog>
+
+  <noscript>
+    <p class="noscript">Nagpur Happenings needs JavaScript to load the event calendar.</p>
+  </noscript>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
