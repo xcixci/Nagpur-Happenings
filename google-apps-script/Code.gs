@@ -10,6 +10,7 @@
  *    rows, so visitors can see a cancellation; switch that off below).
  *  - Never returns Draft or Completed rows, and never returns columns
  *    that aren't listed in COLUMN_ALIASES (so private notes stay private).
+ *  - Also sends the optional "Days" tab (festivals, special days) as labels.
  *  - Sends JSON. It has no doPost, so nobody can write to your sheet
  *    through this URL.
  */
@@ -19,6 +20,10 @@
 // Name of the tab that holds your events. If no tab has this name, the script
 // uses the first tab with Title, Date and Status headers.
 var SHEET_NAME = 'Events';
+
+// Optional tab for festivals and special days shown as small labels on the
+// calendar (columns: Date, Name). Leave it out and nothing is shown.
+var DAYS_SHEET_NAME = 'Days';
 
 // true: cancelled events are sent too (shown as "Cancelled" on the calendar,
 //       never in the upcoming list).
@@ -107,7 +112,7 @@ function buildFeed_() {
   var range = sheet.getDataRange();
   var values = range.getValues();
   var shown = range.getDisplayValues();
-  if (!values.length || (values.length === 1 && values[0].join('') === '')) return feed_([], tz);
+  if (!values.length || (values.length === 1 && values[0].join('') === '')) return feed_([], tz, readDays_(ss, tz));
 
   var columns = mapColumns_(values[0]);
   if (columns.title === undefined || columns.date === undefined || columns.status === undefined) {
@@ -126,18 +131,44 @@ function buildFeed_() {
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
 
-  return feed_(events, tz);
+  return feed_(events, tz, readDays_(ss, tz));
 }
 
-function feed_(events, tz) {
+function feed_(events, tz, days) {
   return {
     ok: true,
     source: 'Nagpur Happenings',
     timezone: tz,
     generatedAt: Utilities.formatDate(new Date(), 'Asia/Kolkata', "yyyy-MM-dd'T'HH:mm:ssXXX"),
     count: events.length,
-    events: events
+    events: events,
+    days: days || []
   };
+}
+
+// Reads the optional Days tab: one row per day, columns Date and Name.
+function readDays_(ss, tz) {
+  var sheet = ss.getSheetByName(DAYS_SHEET_NAME);
+  if (!sheet) return [];
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var shown = range.getDisplayValues();
+  if (values.length < 2) return [];
+  var dateCol = -1, nameCol = -1;
+  values[0].forEach(function (header, i) {
+    var key = normKey_(header);
+    if (dateCol < 0 && key === 'date') dateCol = i;
+    if (nameCol < 0 && (key === 'name' || key === 'day' || key === 'festival' || key === 'occasion' || key === 'label')) nameCol = i;
+  });
+  if (dateCol < 0 || nameCol < 0) return [];
+  var days = [];
+  for (var r = 1; r < values.length; r++) {
+    var name = String(shown[r][nameCol] || '').trim();
+    var date = toIsoDate_(values[r][dateCol], shown[r][dateCol], tz);
+    if (name && date) days.push({ date: date, name: name.slice(0, 60) });
+  }
+  days.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  return days;
 }
 
 // Fallback when no tab is called "Events": use the first tab whose row 1 has

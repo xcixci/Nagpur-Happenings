@@ -31,6 +31,7 @@ nagpur-happenings/
 │   └── Code.gs                 Paste this into Apps Script (step 2)
 └── google-sheets/
     ├── events-template.csv             Empty-ish template: headers + 3 example rows
+    ├── days-template.csv               Festivals and special days for the "Days" tab
     └── sample-events-november-2026.csv 24 illustrative rows for November 2026
 ```
 
@@ -91,6 +92,17 @@ Keep these header names in row 1. The order doesn't matter, and extra columns (f
 | Published | shown | shown (until it ends) | Live events |
 | Cancelled | shown, struck through, marked *Cancelled* | hidden | Telling people who planned to go |
 | Completed | hidden | hidden | Keeping old events in the sheet for your records |
+
+### Optional: festivals and special days ("Days" tab)
+
+Add a second tab called **`Days`** with two columns, **Date** and **Name**:
+
+| Date | Name |
+|---|---|
+| 2026-11-08 | Diwali |
+| 2026-11-26 | Constitution Day |
+
+These show as small orange labels beside the date on big screens, as an orange mark under the date on phones (with the name in the month list), and inside event pop-ups for that day. They are not events: they don't appear in *Coming Up* and category filters don't hide them. Import `google-sheets/days-template.csv` to start. Next year, just add the new dates.
 
 Want cancelled events to disappear completely instead? Set `INCLUDE_CANCELLED = false` at the top of `Code.gs` and redeploy (see the note at the end of step 2).
 

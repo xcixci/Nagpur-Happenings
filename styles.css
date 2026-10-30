@@ -283,6 +283,9 @@ img { max-width: 100%; }
 .day--past .day__num { color: var(--moss); }
 .day--has-events .day__num { font-weight: 700; color: var(--ink); }
 .day--today .day__num { background: var(--ink); color: var(--paper); font-weight: 700; }
+.day__label { display: none; }
+.day--special .day__num { box-shadow: inset 0 -3px 0 var(--orange); border-radius: 50% 50% 4px 4px; }
+.day--today.day--special .day__num { box-shadow: 0 0 0 2px var(--orange); border-radius: 50%; }
 
 .day__events, .day__more { display: none; }
 .day__dots { display: flex; justify-content: center; gap: 3px; min-height: .55rem; }
@@ -310,6 +313,8 @@ img { max-width: 100%; }
 }
 .agenda__day--today .agenda__num { border-radius: 50%; background: var(--ink); color: var(--paper); }
 .agenda__wd { font: 500 .9375rem/1.2 var(--sans); color: var(--moss); }
+.agenda__special { font: 500 .875rem/1.2 var(--sans); color: var(--rind); }
+.agenda__day--quiet { padding-bottom: .6rem; }
 .agenda .event-row:first-child { border-top: 0; }
 
 /* ---------- Event rows (lists) ---------- */
@@ -463,6 +468,8 @@ img { max-width: 100%; }
 .facts dt { padding-top: .05rem; font-size: .9375rem; color: var(--moss); }
 .facts dd { margin: 0; overflow-wrap: anywhere; }
 .facts a { color: var(--rind); }
+.facts__special, .dialog__special { color: var(--rind); font-weight: 500; }
+.dialog__special { margin: -.5rem 0 1rem; }
 
 .dialog__desc { padding-top: 1rem; border-top: 1px solid var(--line); }
 .dialog__desc p { max-width: 62ch; margin-bottom: .8rem; white-space: pre-line; overflow-wrap: anywhere; }
@@ -528,7 +535,14 @@ img { max-width: 100%; }
   .day__num { width: 1.9rem; height: 1.9rem; margin: -.1rem 0 0 -.15rem; }
   .day--has-events .day__num { font-weight: 500; }
   .day--today .day__num { width: 2.2rem; height: 2.2rem; font-size: 1rem; font-weight: 700; }
-  .day--today .day__head::after { content: 'Today'; font-size: .8125rem; font-weight: 500; color: var(--rind); }
+  .day--today .day__head::after { content: 'Today'; flex: none; font-size: .8125rem; font-weight: 500; color: var(--rind); }
+  .day__head { min-width: 0; gap: .4rem; }
+  .day__label {
+    display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 500 .78125rem/1.2 var(--sans); color: var(--rind);
+  }
+  .day--special .day__num { box-shadow: none; border-radius: 50%; }
+  .day--today.day--special .day__num { box-shadow: none; }
 
   .day__dots, .day__tap { display: none; }
   .day__events {

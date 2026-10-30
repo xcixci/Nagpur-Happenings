@@ -9,7 +9,7 @@ window.NH_SAMPLE_DATA = {
   "ok": true,
   "source": "Nagpur Happenings",
   "timezone": "Asia/Kolkata",
-  "generatedAt": "2026-10-30T21:59:01+05:30",
+  "generatedAt": "2026-10-31T00:21:20+05:30",
   "count": 22,
   "events": [
     {
@@ -429,6 +429,36 @@ window.NH_SAMPLE_DATA = {
       "coverImageUrl": "",
       "status": "Published",
       "featured": false
+    }
+  ],
+  "days": [
+    {
+      "date": "2026-11-06",
+      "name": "Dhanteras"
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Diwali"
+    },
+    {
+      "date": "2026-11-09",
+      "name": "Govardhan Puja"
+    },
+    {
+      "date": "2026-11-11",
+      "name": "Bhai Dooj"
+    },
+    {
+      "date": "2026-11-14",
+      "name": "Children's Day"
+    },
+    {
+      "date": "2026-11-24",
+      "name": "Guru Nanak Jayanti"
+    },
+    {
+      "date": "2026-11-26",
+      "name": "Constitution Day"
     }
   ]
 };

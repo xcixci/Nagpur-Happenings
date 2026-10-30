@@ -95,10 +95,11 @@ const NH_CONFIG = {
   const MAX_PER_DAY = Math.max(1, Number(CONFIG.MAX_EVENTS_PER_DAY) || 3);
   const UPCOMING_LIMIT = Math.min(20, Math.max(1, Number(CONFIG.UPCOMING_LIMIT) || 8));
   const CACHE_MS = Math.max(0, Number(CONFIG.CACHE_MINUTES) || 0) * 60 * 1000;
-  const CACHE_KEY = 'nagpur-happenings:events:v1:' + String(CONFIG.EVENTS_API_URL || '');
+  const CACHE_KEY = 'nagpur-happenings:events:v2:' + String(CONFIG.EVENTS_API_URL || '');
 
   const state = {
     events: [],
+    days: new Map(), // 'YYYY-MM-DD' -> ['Diwali', ...] from the Sheet's Days tab
     loaded: false,
     sample: false,
     view: { y: 2026, m: 0 },
@@ -247,6 +248,10 @@ const NH_CONFIG = {
 
   function placeLabel(ev) {
     return [ev.venue, ev.area].filter(Boolean).join(', ');
+  }
+
+  function dayNames(iso) {
+    return (state.days.get(iso) || []).join(', ');
   }
 
   function categoryName(key) {
@@ -562,9 +567,9 @@ const NH_CONFIG = {
     }
   }
 
-  function writeCache(events) {
+  function writeCache(events, days) {
     try {
-      window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), events }));
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), events, days: days || [] }));
     } catch (e) {
       /* storage full or blocked: carry on without caching */
     }
@@ -591,17 +596,25 @@ const NH_CONFIG = {
       }
       if (!data || data.ok === false) throw new Error((data && data.error) || 'The events feed reported an error.');
       if (!Array.isArray(data.events)) throw new Error('The events feed has no "events" list.');
-      return data.events;
+      return { events: data.events, days: Array.isArray(data.days) ? data.days : [] };
     } finally {
       if (timer) clearTimeout(timer);
     }
   }
 
-  function applyEvents(rawEvents) {
+  function applyEvents(rawEvents, rawDays) {
     state.events = rawEvents
       .map((raw, i) => normalizeEvent(raw, i))
       .filter(Boolean)
       .sort(compareEvents);
+    state.days = new Map();
+    (Array.isArray(rawDays) ? rawDays : []).forEach((d) => {
+      const date = text(d && d.date);
+      const name = text(d && d.name).slice(0, 60);
+      if (!name || !parseIso(date)) return;
+      if (!state.days.has(date)) state.days.set(date, []);
+      state.days.get(date).push(name);
+    });
     state.loaded = true;
     renderAll();
     openPendingEvent();
@@ -618,7 +631,7 @@ const NH_CONFIG = {
     const cached = readCache();
     const age = cached ? Date.now() - cached.savedAt : Infinity;
     const fresh = cached && age >= 0 && age < CACHE_MS;
-    if (cached) applyEvents(cached.events);
+    if (cached) applyEvents(cached.events, cached.days);
     if (fresh && !force) {
       setStatus('');
       return;
@@ -627,9 +640,9 @@ const NH_CONFIG = {
     loading = true;
     const showLoading = setTimeout(() => setStatus('loading', 'Loading events…'), 300);
     try {
-      const events = await fetchEvents();
-      writeCache(events);
-      applyEvents(events);
+      const feed = await fetchEvents();
+      writeCache(feed.events, feed.days);
+      applyEvents(feed.events, feed.days);
       setStatus('');
     } catch (err) {
       console.error('[Nagpur Happenings] Could not load events:', err);
@@ -673,7 +686,7 @@ const NH_CONFIG = {
     }
     state.sample = true;
     const wantsEvent = Boolean(pendingEventId);
-    applyEvents(data.events);
+    applyEvents(data.events, data.days);
     if (state.events.length && !wantsEvent) {
       const first = parseIso(state.events[0].date);
       state.view = { y: first.y, m: first.m };
@@ -777,7 +790,9 @@ const NH_CONFIG = {
       const label = WEEKDAYS[dow] + ' ' + day + ' ' + MONTHS[m];
       const countText = list.length ? (list.length === 1 ? '1 event' : list.length + ' events') : 'no events';
 
+      const special = dayNames(iso);
       let cls = 'day';
+      if (special) cls += ' day--special';
       if (dow === 0 || dow === 6) cls += ' day--weekend';
       if (isToday) cls += ' day--today';
       else if (iso < now.iso) cls += ' day--past';
@@ -786,7 +801,8 @@ const NH_CONFIG = {
       const cell = h('li', { class: cls, 'aria-current': isToday ? 'date' : null },
         h('div', { class: 'day__head' },
           h('span', { class: 'day__num', 'aria-hidden': 'true' }, String(day)),
-          h('span', { class: 'visually-hidden' }, label + (isToday ? ', today' : '') + ', ' + countText)));
+          special ? h('span', { class: 'day__label', 'aria-hidden': 'true', title: special }, special) : null,
+          h('span', { class: 'visually-hidden' }, label + (isToday ? ', today' : '') + (special ? ', ' + special : '') + ', ' + countText)));
 
       if (list.length) {
         cell.appendChild(h('ul', { class: 'day__events' },
@@ -803,7 +819,7 @@ const NH_CONFIG = {
           list.slice(0, 4).map((ev) => h('i', { class: 'dot cat-' + ev.category + (ev.status === 'Cancelled' ? ' dot--cancelled' : '') }))));
         cell.appendChild(h('button', {
           type: 'button', class: 'day__tap',
-          'aria-label': label + ', ' + countText,
+          'aria-label': label + (special ? ', ' + special : '') + ', ' + countText,
           onclick: () => openDay(iso),
         }));
       }
@@ -869,18 +885,26 @@ const NH_CONFIG = {
   function renderAgenda(now) {
     const { y, m } = state.view;
     const list = eventsInMonth(y, m);
+    const byDate = groupByDate(list);
+    const prefix = y + '-' + pad(m + 1) + '-';
+    const dates = new Set(byDate.keys());
+    state.days.forEach((names, iso) => { if (iso.startsWith(prefix)) dates.add(iso); });
     els.agendaTitle.textContent = 'Events in ' + MONTHS[m];
     els.agenda.hidden = list.length === 0;
     const groups = [];
-    groupByDate(list).forEach((items, iso) => {
+    Array.from(dates).sort().forEach((iso) => {
+      const items = byDate.get(iso) || [];
       const p = parseIso(iso);
       const dow = weekdayOf(p.y, p.m, p.d);
-      groups.push(h('li', { class: 'agenda__day' + (iso === now.iso ? ' agenda__day--today' : ''), id: 'agenda-' + iso },
+      const special = dayNames(iso);
+      groups.push(h('li', { class: 'agenda__day' + (iso === now.iso ? ' agenda__day--today' : '') + (items.length ? '' : ' agenda__day--quiet'), id: 'agenda-' + iso },
         h('h4', { class: 'agenda__date' },
           h('span', { class: 'agenda__num' }, String(p.d)),
-          h('span', { class: 'agenda__wd' }, (iso === now.iso ? 'Today, ' : '') + WEEKDAYS[dow])),
-        h('ol', { class: 'event-list event-list--compact' },
-          items.map((ev) => eventRow(ev, { now, level: 5 })))));
+          h('span', { class: 'agenda__wd' }, (iso === now.iso ? 'Today, ' : '') + WEEKDAYS[dow]),
+          special ? h('span', { class: 'agenda__special' }, special) : null),
+        items.length
+          ? h('ol', { class: 'event-list event-list--compact' }, items.map((ev) => eventRow(ev, { now, level: 5 })))
+          : null));
     });
     els.agendaList.replaceChildren(...groups);
   }
@@ -1001,7 +1025,7 @@ const NH_CONFIG = {
       ? h('a', { class: 'maps-link', href: mapsUrl(ev), target: '_blank', rel: 'noopener noreferrer', onclick: () => track('maps', ev) }, 'Open in Google Maps')
       : null;
     nodes.push(h('dl', { class: 'facts' },
-      fact('When', longDate(ev.date), timeRange(ev)),
+      fact('When', longDate(ev.date), timeRange(ev), dayNames(ev.date) ? h('span', { class: 'facts__special' }, dayNames(ev.date)) : null),
       fact('Where', ev.venue, where, maps),
       fact('Entry', priceLabel(ev)),
       fact('Organiser', ev.organiserName, contactNode(ev.organiserContact))));
@@ -1067,6 +1091,7 @@ const NH_CONFIG = {
     setEventHash(null);
     showInDialog([
       h('h2', { class: 'dialog__title', id: 'dialog-title', tabindex: '-1' }, longDate(iso)),
+      dayNames(iso) ? h('p', { class: 'dialog__special' }, dayNames(iso)) : null,
       h('ol', { class: 'event-list event-list--compact event-list--dialog' },
         list.map((ev) => eventRow(ev, { now, level: 3, backTo: iso }))),
     ]);
