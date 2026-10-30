@@ -28,10 +28,12 @@ const NH_CONFIG = {
   // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
   GOATCOUNTER_CODE: 'nagpurhappenings',
 
-  // Show "N visits since <date>" in the footer. Needs "Allow adding visitor counts
-  // on your website" switched on in GoatCounter's settings. Set to false to hide.
+  // Rolling "odometer" visit counter in the footer. Needs "Allow adding visitor
+  // counts on your website" switched on in GoatCounter's settings. Set to false to hide.
   SHOW_VISIT_COUNT: true,
   VISIT_COUNT_SINCE: '31 Oct 2026',
+  // Keep the counter hidden until the total reaches this number (1 = show right away).
+  VISIT_COUNT_MIN: 1,
 
   // How long a visitor's browser reuses downloaded events before asking again.
   CACHE_MINUTES: 10,
@@ -390,7 +392,8 @@ const NH_CONFIG = {
     document.head.appendChild(script);
   }
 
-  // Public visit count in the footer (site total from GoatCounter)
+  // Public visit count in the footer (site total from GoatCounter), shown as an
+  // odometer whose digits roll into place when the footer scrolls into view.
   async function showVisitCount() {
     const code = text(CONFIG.GOATCOUNTER_CODE).toLowerCase();
     if (!CONFIG.SHOW_VISIT_COUNT || !/^[a-z0-9-]+$/.test(code) || !els.visits) return;
@@ -398,14 +401,56 @@ const NH_CONFIG = {
       const res = await fetch('https://' + code + '.goatcounter.com/counter/TOTAL.json', { cache: 'no-store' });
       if (!res.ok) return; // setting not switched on yet, or no data
       const data = await res.json();
-      const count = text(data && data.count);
-      if (!/^[\d,.\s]+$/.test(count) || count.replace(/\D/g, '') === '0') return;
-      const since = text(CONFIG.VISIT_COUNT_SINCE);
-      els.visits.textContent = count.trim() + ' visits' + (since ? ' since ' + since : '');
-      els.visits.hidden = false;
+      const raw = text(data && data.count);
+      if (!/^[\d,.\s]+$/.test(raw)) return;
+      const total = parseInt(raw.replace(/\D/g, ''), 10);
+      const min = Math.max(1, Number(CONFIG.VISIT_COUNT_MIN) || 1);
+      if (!Number.isFinite(total) || total < min) return;
+      renderOdometer(total);
     } catch (e) {
       /* counter unavailable: show nothing */
     }
+  }
+
+  function renderOdometer(total) {
+    const shown = total.toLocaleString('en-IN'); // 1,23,456 style
+    const since = text(CONFIG.VISIT_COUNT_SINCE);
+    const label = (total === 1 ? 'visit' : 'visits') + (since ? ' since ' + since : '');
+    // Like a real meter, small numbers get faded leading zeros: 6 → 0006.
+    const MIN_WHEELS = 4;
+    const realDigits = shown.replace(/\D/g, '').length;
+    const pad = Math.max(0, MIN_WHEELS - realDigits);
+    const chars = Array(pad).fill('p').concat(Array.from(shown));
+    const wheels = pad + realDigits;
+    let i = 0;
+    const cells = chars.map((ch) => {
+      if (ch !== 'p' && !/\d/.test(ch)) return h('span', { class: 'odo__sep' }, ch);
+      const index = i++;
+      const digit = ch === 'p' ? 0 : Number(ch);
+      const strip = h('span', { class: 'odo__strip' });
+      // Two turns of 0–9, so every wheel spins a full lap before it lands.
+      for (let n = 0; n < 20; n += 1) strip.appendChild(h('span', null, String(n % 10)));
+      return h('span', {
+        class: 'odo__cell' + (ch === 'p' ? ' odo__cell--pad' : '') + (index === wheels - 1 ? ' odo__cell--last' : ''),
+        style: '--d:' + (digit + 10) + ';--i:' + index,
+      }, strip);
+    });
+    const odo = h('span', { class: 'odo', 'aria-hidden': 'true' }, cells);
+    els.visits.replaceChildren(
+      h('span', { class: 'visually-hidden' }, shown + ' ' + label),
+      odo,
+      h('span', { class: 'visits__label', 'aria-hidden': 'true' }, label)
+    );
+    els.visits.hidden = false;
+
+    const roll = () => requestAnimationFrame(() => requestAnimationFrame(() => odo.classList.add('is-rolled')));
+    if (!('IntersectionObserver' in window)) { roll(); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      roll();
+    }, { threshold: 0.6 });
+    io.observe(odo);
   }
 
   // Counts a click, e.g. track('register', ev) → "register-NH-002".

@@ -169,6 +169,9 @@ Other settings in the same block:
 | `TIMEZONE` | `Asia/Kolkata` | "Today" and past/upcoming are worked out in Nagpur time, whatever the visitor's device timezone |
 | `CREATOR_…` | your details | The "Made by" credit in the footer and the Instagram button in event pop-ups |
 | `GOATCOUNTER_CODE` | empty | Turns on the visit counter (step 7) |
+| `SHOW_VISIT_COUNT` | `true` | Shows the odometer visit count in the footer (step 7) |
+| `VISIT_COUNT_SINCE` | `31 Oct 2026` | The date in "visits since …" |
+| `VISIT_COUNT_MIN` | `1` | Keeps the odometer hidden until the total reaches this number |
 
 Open `index.html` again: your real events should load.
 
@@ -231,6 +234,8 @@ A custom domain (like `nagpurhappenings.in`) can be added under **Settings → P
 
 1. Sign up at [goatcounter.com](https://www.goatcounter.com) (free for non-commercial sites). Pick a code, e.g. `nagpurhappenings`; your dashboard will be `nagpurhappenings.goatcounter.com`.
 2. Put the code in `script.js`: `GOATCOUNTER_CODE: 'nagpurhappenings'`. Commit.
+3. For the public odometer in the footer: in GoatCounter, **Settings → Main → Allow adding visitor counts on your website**. The wheels roll into place when a visitor scrolls to the footer.
+4. Don't count yourself: on each browser you use, open your site with `#toggle-goatcounter` at the end of the address and reload until a popup says tracking is disabled. WhatsApp and Instagram open links in their own built-in browsers, so do it in those too. Or add your IP under **Settings → Tracking → Ignore IPs**.
 
 It counts page visits without cookies, so no cookie banner is needed. It also counts clicks, each tagged with the event ID:
 
