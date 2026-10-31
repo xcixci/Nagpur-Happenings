@@ -40,8 +40,10 @@ const NH_CONFIG = {
   ALSO_BY: [
     {
       name: 'Orange Hunter',
-      url: '',
-      note: 'A free, volunteer-run community for ADHD and neurodivergent folks to meet and support each other.',
+      url: 'https://www.instagram.com/orangehunterxci/',
+      note: 'A free, volunteer-run community for people living with ADHD, anxiety, depression and other ' +
+        'neurodivergent or mental-health experiences. Meet people with a similar brain and support each other. ' +
+        'Peer support, not therapy.',
       helpline: 'Need to talk to someone now? Tele-MANAS',
       helplineNumber: '14416',
       helplineNote: '(free, 24×7).',
