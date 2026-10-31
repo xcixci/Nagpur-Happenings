@@ -162,7 +162,8 @@ window.NH_SAMPLE_DATA = {
       "priceType": "Paid",
       "coverImageUrl": "",
       "status": "Published",
-      "featured": false
+      "featured": false,
+      "audience": "18+"
     },
     {
       "id": "NH-009",
@@ -181,7 +182,8 @@ window.NH_SAMPLE_DATA = {
       "priceType": "Free",
       "coverImageUrl": "",
       "status": "Published",
-      "featured": false
+      "featured": false,
+      "audience": "Kids 6–12"
     },
     {
       "id": "NH-010",
@@ -409,7 +411,8 @@ window.NH_SAMPLE_DATA = {
       "priceType": "Free",
       "coverImageUrl": "",
       "status": "Published",
-      "featured": false
+      "featured": false,
+      "audience": "Women only, Neurodivergent-friendly"
     },
     {
       "id": "NH-023",

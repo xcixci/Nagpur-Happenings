@@ -35,6 +35,29 @@ const NH_CONFIG = {
   // Keep the counter hidden until the total reaches this number (1 = show right away).
   VISIT_COUNT_MIN: 1,
 
+  // "Also by ..." box in the footer. Only list things that are live.
+  // url can be '' (shows the name without a link). The helpline lines are optional.
+  ALSO_BY: [
+    {
+      name: 'Orange Hunter',
+      url: '',
+      note: 'A free, volunteer-run community for ADHD and neurodivergent folks to meet and support each other.',
+      helpline: 'Need to talk to someone now? Tele-MANAS',
+      helplineNumber: '14416',
+      helplineNote: '(free, 24×7).',
+    },
+    {
+      name: 'Arinjay Business Systems',
+      url: 'https://arinjaysystems.com',
+      note: 'AI visibility audits and business systems for growing businesses.',
+    },
+    {
+      name: 'xci.cx',
+      url: 'https://xci.cx',
+      note: 'All my links and projects in one place.',
+    },
+  ],
+
   // How long a visitor's browser reuses downloaded events before asking again.
   CACHE_MINUTES: 10,
 
@@ -101,6 +124,8 @@ const NH_CONFIG = {
   const WEEK_START = CONFIG.WEEK_STARTS_ON === 0 ? 0 : 1;
   const MAX_PER_DAY = Math.max(1, Number(CONFIG.MAX_EVENTS_PER_DAY) || 3);
   const UPCOMING_LIMIT = Math.min(20, Math.max(1, Number(CONFIG.UPCOMING_LIMIT) || 8));
+  const UPCOMING_SHOWN = 5;     // Coming Up shows this many, then a 'Show N more' button
+  const AGENDA_DAYS_SHOWN = 4;  // the phone month list shows this many days, then 'Show all'
   const CACHE_MS = Math.max(0, Number(CONFIG.CACHE_MINUTES) || 0) * 60 * 1000;
   const CACHE_KEY = 'nagpur-happenings:events:v2:' + String(CONFIG.EVENTS_API_URL || '');
 
@@ -111,6 +136,8 @@ const NH_CONFIG = {
     sample: false,
     view: { y: 2026, m: 0 },
     filters: new Set(),
+    agendaOpen: null,     // 'y-m' of a month whose full list is open
+    upcomingOpen: false,
   };
 
   const els = {};
@@ -336,6 +363,8 @@ const NH_CONFIG = {
       ticketPrice: text(raw.ticketPrice),
       priceType: priceType(raw.priceType, raw.ticketPrice),
       coverImageUrl: safeUrl(raw.coverImageUrl),
+      // "Who can join", e.g. "Kids 6–12" or "18+, Neurodivergent-friendly". Blank = open to all.
+      audience: text(raw.audience).split(/\s*[,;\n]\s*/).filter(Boolean).slice(0, 3).map((a) => a.slice(0, 40)),
       status,
       featured,
     };
@@ -598,6 +627,70 @@ const NH_CONFIG = {
   function shareText(ev) {
     const when = [longDate(ev.date), timeRange(ev)].filter(Boolean).join(', ');
     return [ev.title, when, placeLabel(ev), eventLink(ev)].filter(Boolean).join('\n');
+  }
+
+  // Phone share sheet (Instagram, Telegram, Messages...). Hidden where the browser has none.
+  function nativeShareButton(ev) {
+    if (typeof navigator.share !== 'function') return null;
+    const btn = h('button', { type: 'button', class: 'btn btn--line' }, 'More ways to share');
+    btn.addEventListener('click', () => {
+      const when = [longDate(ev.date), timeRange(ev)].filter(Boolean).join(', ');
+      const body = [ev.title, when, placeLabel(ev)].filter(Boolean).join('\n');
+      navigator.share({ title: ev.title, text: body, url: eventLink(ev) })
+        .then(() => track('share', ev), () => { /* share sheet closed */ });
+    });
+    return btn;
+  }
+
+  function followUrl() {
+    const handle = creatorHandle();
+    return handle ? 'https://www.instagram.com/' + handle + '/' : '';
+  }
+
+  // "Event updates and more on Instagram: Follow @handle"
+  function followLine(action, ev) {
+    const url = followUrl();
+    if (!url) return null;
+    return h('p', { class: 'follow-line' },
+      'Event updates and more on Instagram: ',
+      h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', onclick: () => track(action, ev) },
+        'Follow @' + creatorHandle()));
+  }
+
+  function renderFollowLine() {
+    const line = followLine('follow-upcoming');
+    if (!line || !els.upcomingFollow) return;
+    els.upcomingFollow.replaceChildren(...Array.from(line.childNodes));
+    els.upcomingFollow.hidden = false;
+  }
+
+  // Footer box: "Also by Arinjay"
+  function renderAlsoBy() {
+    const items = (Array.isArray(CONFIG.ALSO_BY) ? CONFIG.ALSO_BY : [])
+      .filter((item) => item && text(item.name))
+      .map((item) => {
+        const name = text(item.name);
+        const url = safeUrl(item.url);
+        const slug = norm(name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const number = text(item.helplineNumber);
+        const helpline = text(item.helpline) && /^[\d\s+-]{3,20}$/.test(number)
+          ? h('p', { class: 'also__help' }, text(item.helpline) + ' ',
+            h('a', { href: 'tel:' + number.replace(/[^\d+]/g, '') }, number),
+            text(item.helplineNote) ? ' ' + text(item.helplineNote) : '')
+          : null;
+        return h('li', { class: 'also__item' },
+          url
+            ? h('a', { class: 'also__name', href: url, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('also-' + slug) }, name)
+            : h('p', { class: 'also__name' }, name),
+          text(item.note) ? h('p', { class: 'also__note' }, text(item.note)) : null,
+          helpline);
+      });
+    if (!items.length || !els.alsoBy) return;
+    const who = text(CONFIG.CREATOR_NAME);
+    els.alsoBy.replaceChildren(
+      h('h2', { class: 'also__title', id: 'also-title' }, who ? 'Also by ' + who : 'Also from us'),
+      h('ul', { class: 'also__list' }, items));
+    els.alsoBy.hidden = false;
   }
 
   function copyToClipboard(value) {
@@ -972,7 +1065,16 @@ const NH_CONFIG = {
       h('p', { class: 'event-row__tags' },
         ev.status === 'Cancelled' ? tag('Cancelled', 'tag--cancelled') : null,
         ev.featured && ev.status !== 'Cancelled' ? tag('Featured', 'tag--featured') : null,
+        ev.status !== 'Cancelled' ? ev.audience.map((a) => tag(a, 'tag--audience')) : null,
         price && ev.status !== 'Cancelled' ? tag(price, ev.priceType === 'Free' ? 'tag--free' : 'tag--paid') : null));
+  }
+
+  // "Show all" button under a long list. Clicking it re-renders the lists.
+  function listToggle(controls, expanded, moreLabel, onToggle) {
+    return h('button', {
+      type: 'button', class: 'list-toggle', 'aria-controls': controls, 'aria-expanded': expanded ? 'true' : 'false',
+      onclick: onToggle,
+    }, expanded ? 'Show fewer' : moreLabel, h('span', { class: 'list-toggle__chev', 'aria-hidden': 'true' }));
   }
 
   function renderAgenda(now) {
@@ -985,7 +1087,16 @@ const NH_CONFIG = {
     els.agendaTitle.textContent = 'Events in ' + MONTHS[m];
     els.agenda.hidden = list.length === 0;
     const groups = [];
-    Array.from(dates).sort().forEach((iso) => {
+    const allDates = Array.from(dates).sort();
+    // Long months collapse to the next few days (from today, in the current month)
+    const monthKey = y + '-' + m;
+    const expanded = state.agendaOpen === monthKey;
+    let shown = allDates;
+    if (!expanded && allDates.length > AGENDA_DAYS_SHOWN) {
+      const fromToday = allDates.filter((iso) => iso >= now.iso);
+      shown = (fromToday.length ? fromToday : allDates).slice(0, AGENDA_DAYS_SHOWN);
+    }
+    shown.forEach((iso) => {
       const items = byDate.get(iso) || [];
       const p = parseIso(iso);
       const dow = weekdayOf(p.y, p.m, p.d);
@@ -1000,13 +1111,29 @@ const NH_CONFIG = {
           : null));
     });
     els.agendaList.replaceChildren(...groups);
+    els.agendaMore.replaceChildren(shown.length < allDates.length || expanded
+      ? listToggle('agenda-list', expanded, 'Show all ' + allDates.length + ' days in ' + MONTHS[m], () => {
+        state.agendaOpen = expanded ? null : monthKey;
+        renderAgenda(nowInCity());
+        if (expanded) els.agenda.scrollIntoView({ block: 'start' });
+      })
+      : '');
   }
 
   function renderUpcoming(now) {
     const list = state.events
       .filter((ev) => ev.status === 'Published' && passesFilter(ev) && !hasEnded(ev, now))
       .slice(0, UPCOMING_LIMIT);
-    els.upcomingList.replaceChildren(...list.map((ev) => eventRow(ev, { now, showDate: true, level: 3 })));
+    const expanded = state.upcomingOpen;
+    const shown = expanded ? list : list.slice(0, UPCOMING_SHOWN);
+    els.upcomingList.replaceChildren(...shown.map((ev) => eventRow(ev, { now, showDate: true, level: 3 })));
+    els.upcomingMore.replaceChildren(list.length > UPCOMING_SHOWN
+      ? listToggle('upcoming-list', expanded, 'Show ' + (list.length - UPCOMING_SHOWN) + ' more', () => {
+        state.upcomingOpen = !expanded;
+        renderUpcoming(nowInCity());
+        if (expanded) els.upcoming.scrollIntoView({ block: 'start' });
+      })
+      : '');
 
     if (!state.loaded) {
       els.upcomingEmpty.hidden = true;
@@ -1121,6 +1248,7 @@ const NH_CONFIG = {
       fact('When', longDate(ev.date), timeRange(ev), dayNames(ev.date) ? h('span', { class: 'facts__special' }, dayNames(ev.date)) : null),
       fact('Where', ev.venue, where, maps),
       fact('Entry', priceLabel(ev)),
+      ev.audience.length ? fact('Who can join', ev.audience.join(', ')) : null,
       fact('Organiser', ev.organiserName, contactNode(ev.organiserContact))));
 
     if (ev.description) {
@@ -1147,7 +1275,10 @@ const NH_CONFIG = {
         class: 'btn btn--line', href: 'https://wa.me/?text=' + encodeURIComponent(shareText(ev)),
         target: '_blank', rel: 'noopener noreferrer', onclick: () => track('whatsapp', ev),
       }, 'Share on WhatsApp'),
+      nativeShareButton(ev),
       copyBtn));
+
+    nodes.push(followLine('follow-event', ev));
 
     const changedLinks = [];
     const handle = creatorHandle();
@@ -1316,8 +1447,13 @@ const NH_CONFIG = {
       agenda: byId('agenda'),
       agendaTitle: byId('agenda-title'),
       agendaList: byId('agenda-list'),
+      agendaMore: byId('agenda-more'),
+      upcoming: byId('upcoming'),
       upcomingList: byId('upcoming-list'),
+      upcomingMore: byId('upcoming-more'),
       upcomingEmpty: byId('upcoming-empty'),
+      upcomingFollow: byId('upcoming-follow'),
+      alsoBy: byId('also-by'),
       eventDialog: byId('event-dialog'),
       dialogContent: byId('dialog-content'),
       aboutDialog: byId('about-dialog'),
@@ -1337,6 +1473,8 @@ const NH_CONFIG = {
     wireDialogs();
     applyLinks();
     renderCreator();
+    renderFollowLine();
+    renderAlsoBy();
     loadCounter();
     showVisitCount();
     pendingEventId = eventIdFromHash();

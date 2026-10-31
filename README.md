@@ -83,6 +83,7 @@ Keep these header names in row 1. The order doesn't matter, and extra columns (f
 | Cover Image URL | Optional direct link to an image (`https://…jpg`) | |
 | Status | `Draft`, `Published`, `Cancelled` or `Completed` | `Published` |
 | Featured | `Yes` or `No` | `No` |
+| Who can join | Optional. Leave blank when it's open to all. Up to 3, separated by commas. Shown as a purple tag. Use *Neurodivergent-friendly* only when the organiser says so. | `Kids 6–12`, `18+`, `Women only, Neurodivergent-friendly` |
 
 **What each status does on the website**
 
@@ -179,31 +180,20 @@ Open `index.html` again: your real events should load.
 
 ## Step 4: Set up the Google Form for submissions
 
-1. Go to [forms.new](https://forms.new). Title: *Submit an event to Nagpur Happenings*. Description: *Every submission is reviewed before it appears on the calendar.*
-2. Add these questions:
+The script `google-apps-script/CreateForm.gs` builds the form for you. It starts with one question, *What would you like to do?*, which leads to one of two short sections:
 
-   | Question | Type | Required |
-   |---|---|---|
-   | Event title | Short answer | Yes |
-   | Category | Dropdown with the 8 categories | Yes |
-   | Date | Date | Yes |
-   | Start time | Time | Yes |
-   | End time | Time | No |
-   | Venue | Short answer | Yes |
-   | Area / locality in Nagpur | Short answer | Yes |
-   | Description | Paragraph | Yes |
-   | Organiser name | Short answer | Yes |
-   | Public contact (email, phone or website) | Short answer | No |
-   | Registration or ticket link | Short answer | No |
-   | Free or paid? | Multiple choice: Free / Paid | Yes |
-   | Ticket price (₹) | Short answer | No |
-   | Cover image link | Short answer | No |
-   | Your email (so we can reach you; not published) | Short answer | Yes |
+- **Submit an event:** title, category, date, times, venue, area, description, organiser, contact, link, price, *Who can join?*, poster, and the submitter's email or phone.
+- **Request a kind of event:** what they wish was happening in Nagpur, which community could run it, and an optional email or phone.
 
-3. **Responses tab → Link to Sheets → Select existing spreadsheet** → choose your events spreadsheet. Google adds a new tab called *Form Responses 1*.
-   Submissions land there, **not** in the `Events` tab, so nothing goes live by itself. Spam can't reach the website; you just delete it.
-   If spam ever becomes annoying: form **Settings → Responses → Collect email addresses → Verified**. People then have to sign in with Google to submit, which stops most bots.
-4. Click **Send → link icon → Shorten URL → Copy**, and paste it into `SUBMIT_FORM_URL` in `script.js`.
+1. Open the events Sheet → **Extensions → Apps Script**.
+2. Click **+** next to *Files* → **Script**, name it `CreateForm`, paste the whole of `CreateForm.gs`, and **Save**.
+3. Pick `createSubmissionForm` in the function menu, click **Run**, and allow access.
+4. Open **Execution log**. It shows *Link to share*. Paste that link into `SUBMIT_FORM_URL` in `script.js`.
+
+Answers land in a new *Form Responses* tab, **not** in `Events`, so nothing goes live by itself. Spam can't reach the website; you just delete it. Requests (ideas) appear in the same tab with the event columns empty.
+If spam ever becomes annoying: form **Settings → Responses → Collect email addresses → Verified**. People then have to sign in with Google to submit, which stops most bots.
+
+Running the script again does not make a second form; it just shows the links again.
 
 **Reviewing a submission:** read the new row in *Form Responses 1*, check the details with the organiser if needed, then copy the fields into a new row in `Events`, give it an Event ID, and set Status to `Published`.
 
@@ -256,6 +246,15 @@ It counts page visits without cookies, so no cookie banner is needed. It also co
 Every event pop-up has **Share on WhatsApp** and **Copy link**. The link looks like `…/nagpur-happenings/#event=NH-012` and opens the calendar straight to that event. You can build these links yourself for Instagram stories and bios: your site address + `#event=` + the Event ID.
 
 Each pop-up also has **Open in Google Maps** (searches the venue and area) and **Something wrong or changed? Tell Arinjay**, with buttons to message @arinjayxci on Instagram or email community@arinjay.email. The email subject is filled in with the event name and ID, so you know which row to fix.
+
+## Updating the feed script (Code.gs)
+
+When `Code.gs` changes (for example, the *Who can join* column was added on 31 Oct 2026), the live feed keeps running the old copy until you publish the new one. Your feed link stays the same:
+
+1. Apps Script → open `Code.gs` → select all → paste the new version → **Save**.
+2. **Deploy → Manage deployments** → click the pencil on your web app → **Version: New version** → **Deploy**.
+
+Don't use *New deployment*: that makes a new link, and the website would still read the old one.
 
 ## Day to day
 

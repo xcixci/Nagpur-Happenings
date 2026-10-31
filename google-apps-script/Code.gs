@@ -57,6 +57,7 @@ var COLUMN_ALIASES = {
   ticketPrice: ['Ticket Price', 'Price'],
   priceType: ['Free or Paid', 'Free/Paid', 'Free / Paid', 'Pricing'],
   coverImageUrl: ['Cover Image URL', 'Image URL', 'Cover Image'],
+  audience: ['Who can join', 'Who Can Attend', 'Audience', 'Eligibility'],
   status: ['Status'],
   featured: ['Featured']
 };
@@ -235,6 +236,7 @@ function readRow_(row, shownRow, columns, tz, rowNumber) {
     ticketPrice: cell('ticketPrice'),
     priceType: canonicalPriceType_(cell('priceType')),
     coverImageUrl: cell('coverImageUrl'),
+    audience: cell('audience'),
     status: status,
     featured: /^(yes|y|true|1)$/i.test(cell('featured'))
   };

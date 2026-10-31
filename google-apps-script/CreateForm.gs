@@ -7,9 +7,13 @@
  *   3. Pick createSubmissionForm in the function menu, click Run, allow access.
  *   4. Open "Execution log": it shows the link to share and the edit link.
  *
+ * The form starts with one question: submit an event, or request a kind of
+ * event you'd like to see. Each answer jumps to its own short section.
+ *
  * The form's answers go into a new "Form Responses" tab in this Sheet.
  * They never appear on the website by themselves: copy the good ones into
- * the Events tab and set Status to Published.
+ * the Events tab and set Status to Published. Requests (ideas) land in the
+ * same tab, with the event columns left empty.
  *
  * Running it again does not make a second form; it just shows the links.
  */
@@ -32,18 +36,22 @@ function createSubmissionForm() {
   }
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var form = FormApp.create('Submit an event to Nagpur Happenings');
+  var form = FormApp.create('Nagpur Happenings: submit or request an event');
   form.setDescription(
-    'Organising something in Nagpur? Tell us about it. Every submission is reviewed ' +
-    'before it appears on the calendar.'
+    'Organising something in Nagpur, or wish something was happening? Tell us. ' +
+    'Every event is reviewed before it appears on the calendar.'
   );
   form.setConfirmationMessage(
-    'Thanks! We will review your event and add it to the calendar if it fits. ' +
-    'We may contact you if anything needs checking.'
+    'Thanks! We read every response. Events are added to the calendar after a quick check, ' +
+    'and we may contact you if anything needs checking.'
   );
   form.setAllowResponseEdits(false);
   form.setProgressBar(false);
 
+  var choice = form.addMultipleChoiceItem().setTitle('What would you like to do?').setRequired(true);
+
+  // Section: submit an event
+  var eventPage = form.addPageBreakItem().setTitle('Event details');
   form.addTextItem().setTitle('Event title').setRequired(true);
   form.addListItem().setTitle('Category').setRequired(true).setChoiceValues([
     'Books & Literature', 'Board Games & Chess', 'Arts & Culture', 'Music & Entertainment',
@@ -63,10 +71,26 @@ function createSubmissionForm() {
   form.addTextItem().setTitle('Registration or ticket link');
   form.addMultipleChoiceItem().setTitle('Free or paid?').setRequired(true).setChoiceValues(['Free', 'Paid']);
   form.addTextItem().setTitle('Ticket price (₹)');
+  form.addTextItem().setTitle('Who can join?')
+    .setHelpText('Leave blank if it is open to all. For example: Kids 6–12, 18+, Women only, Neurodivergent-friendly.');
   form.addTextItem().setTitle('Poster or cover image link')
     .setHelpText('Optional: a public link to an image.');
   form.addTextItem().setTitle('Your email or phone').setRequired(true)
     .setHelpText('So we can reach you about this submission. Not shown on the website.');
+
+  // Section: request a kind of event. Reaching it after "Event details" submits the form instead.
+  var ideaPage = form.addPageBreakItem().setTitle('Your idea')
+    .setGoToPage(FormApp.PageNavigationType.SUBMIT);
+  form.addParagraphTextItem().setTitle('What kind of event do you wish was happening in Nagpur?').setRequired(true)
+    .setHelpText('For example: a weekend chess club in Manish Nagar, a women-only trek, a kids\' coding workshop.');
+  form.addTextItem().setTitle('Any community or organiser you would like to see run it?');
+  form.addTextItem().setTitle('Your email or phone (optional)')
+    .setHelpText('Only if you would like to hear back. Not shown on the website.');
+
+  choice.setChoices([
+    choice.createChoice('Submit an event (I am organising it, or I know about it)', eventPage),
+    choice.createChoice('Request a kind of event I would like to see in Nagpur', ideaPage)
+  ]);
 
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
   props.setProperty(FORM_ID_KEY, form.getId());
