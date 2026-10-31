@@ -383,6 +383,8 @@ img { max-width: 100%; }
 .submit__body { display: grid; justify-items: start; gap: 1rem; }
 .submit__lede { font-family: var(--serif); font-style: italic; font-size: 1.1875rem; line-height: 1.45; max-width: 34ch; }
 .submit__note { font-size: .875rem; }
+.submit__buttons { display: flex; flex-wrap: wrap; gap: .75rem; }
+.submit .btn--outline { box-shadow: inset 0 0 0 1px var(--ink); }
 .submit .btn.is-disabled { opacity: .7; }
 
 /* "Show all" under long lists */

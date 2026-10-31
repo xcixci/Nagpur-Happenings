@@ -189,6 +189,7 @@ The script `google-apps-script/CreateForm.gs` builds the form for you. It starts
 2. Click **+** next to *Files* → **Script**, name it `CreateForm`, paste the whole of `CreateForm.gs`, and **Save**.
 3. Pick `createSubmissionForm` in the function menu, click **Run**, and allow access.
 4. Open **Execution log**. It shows *Link to share*. Paste that link into `SUBMIT_FORM_URL` in `script.js`.
+5. Optional, for the **Request an event** buttons: open the form editor → **⋮** (top right) → **Get pre-filled link** → tick *Request a kind of event…* → **Get link** → **Copy link**, and paste it into `REQUEST_FORM_URL`. The Request buttons then open the form with that answer already chosen. Do the same with *Submit an event…* ticked and use that for `SUBMIT_FORM_URL` if you like.
 
 Answers land in a new *Form Responses* tab, **not** in `Events`, so nothing goes live by itself. Spam can't reach the website; you just delete it. Requests (ideas) appear in the same tab with the event columns empty.
 If spam ever becomes annoying: form **Settings → Responses → Collect email addresses → Verified**. People then have to sign in with Google to submit, which stops most bots.
