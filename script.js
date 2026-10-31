@@ -9,7 +9,7 @@ const NH_CONFIG = {
   EVENTS_API_URL: 'https://script.google.com/macros/s/AKfycbwqxucqiby_yPb-PREPUuUM-xuuCesWCwIa2pAC9jnoia4jUWKnJeNGI8mDHH4sAO-XyA/exec',
 
   // Public link to your Google Form for event submissions. (README, step 4)
-  SUBMIT_FORM_URL: '',
+  SUBMIT_FORM_URL: 'https://docs.google.com/forms/d/e/1FAIpQLSfAouXaWzdK4i1dVSOqxm2Ar2JCaNDMPoWn4CFyeAWiZE0_gg/viewform',
 
   // Instagram profile for the footer "Instagram" link.
   INSTAGRAM_URL: 'https://www.instagram.com/arinjayxci/',
@@ -1400,7 +1400,13 @@ const NH_CONFIG = {
         link.addEventListener('click', () => track(formUrl ? 'submit-form' : 'submit-dm'));
       }
     });
-    if (dmUrl) {
+    if (formUrl) {
+      // The same form also takes requests ("I wish there was a … in Nagpur")
+      els.submitNote.replaceChildren(
+        'Every submission is reviewed before it appears on the calendar. Wish something was happening in Nagpur? ',
+        h('a', { href: formUrl, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('request-form') }, 'Request it'),
+        '.');
+    } else if (dmUrl) {
       els.submitNote.textContent = 'Send your event details to @' + creatorHandle() + ' on Instagram. Every submission is reviewed before it appears on the calendar.';
     } else if (!formUrl) {
       els.submitButton.removeAttribute('href');
