@@ -41,21 +41,25 @@ const NH_CONFIG = {
     {
       name: 'Orange Hunter',
       url: 'https://www.instagram.com/orangehunterxci/',
-      note: 'A free, volunteer-run community for people living with ADHD, anxiety, depression and other ' +
-        'neurodivergent or mental-health experiences. Meet people with a similar brain and support each other. ' +
-        'Peer support, not therapy.',
-      helpline: 'Need to talk to someone now? Tele-MANAS',
-      helplineNumber: '14416',
-      helplineNote: '(free, 24×7).',
+      linkLabel: 'Instagram @orangehunterxci',
+      logo: 'assets/logo-orange-hunter.webp',
+      round: true,
+      note: 'A free, volunteer-run community where people with ADHD, neurodivergence, depression, anxiety and ' +
+        'other mental health struggles can connect, find their people, and support one another without judgement.',
     },
     {
       name: 'Arinjay Business Systems',
-      url: 'https://arinjaysystems.com',
-      note: 'AI visibility audits and business systems for growing businesses.',
+      url: 'https://arinjaysystems.com/',
+      linkLabel: 'arinjaysystems.com',
+      logo: 'assets/logo-abs.webp',
+      note: 'Helping businesses get discovered and recommended by AI through AEO, GEO and comprehensive ' +
+        'AI Visibility Audits. Building smarter digital systems and improving visibility across search engines and AI platforms.',
     },
     {
       name: 'xci.cx',
-      url: 'https://xci.cx',
+      url: 'https://xci.cx/',
+      logo: 'assets/logo-xci.webp',
+      round: true,
       note: 'All my links and projects in one place.',
     },
   ],
@@ -674,18 +678,20 @@ const NH_CONFIG = {
         const name = text(item.name);
         const url = safeUrl(item.url);
         const slug = norm(name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        const number = text(item.helplineNumber);
-        const helpline = text(item.helpline) && /^[\d\s+-]{3,20}$/.test(number)
-          ? h('p', { class: 'also__help' }, text(item.helpline) + ' ',
-            h('a', { href: 'tel:' + number.replace(/[^\d+]/g, '') }, number),
-            text(item.helplineNote) ? ' ' + text(item.helplineNote) : '')
+        const go = () => track('also-' + slug);
+        const linkAttrs = { href: url, target: '_blank', rel: 'noopener noreferrer', onclick: go };
+        const logoSrc = /^assets\/[\w.-]+\.(webp|png|jpe?g|svg)$/.test(text(item.logo)) ? text(item.logo) : '';
+        const img = logoSrc
+          ? h('img', { class: 'also__logo' + (item.round ? ' also__logo--round' : ''), src: logoSrc, alt: '', width: 56, height: 56, loading: 'lazy', decoding: 'async' })
           : null;
-        return h('li', { class: 'also__item' },
-          url
-            ? h('a', { class: 'also__name', href: url, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('also-' + slug) }, name)
-            : h('p', { class: 'also__name' }, name),
-          text(item.note) ? h('p', { class: 'also__note' }, text(item.note)) : null,
-          helpline);
+        return h('li', { class: 'also__item' + (img ? ' also__item--logo' : '') },
+          img ? (url ? h('a', Object.assign({ class: 'also__logo-link', tabindex: '-1', 'aria-hidden': 'true' }, linkAttrs), img) : img) : null,
+          h('div', { class: 'also__body' },
+            url ? h('a', Object.assign({ class: 'also__name' }, linkAttrs), name) : h('p', { class: 'also__name' }, name),
+            text(item.note) ? h('p', { class: 'also__note' }, text(item.note)) : null,
+            url && text(item.linkLabel)
+              ? h('p', { class: 'also__link' }, h('a', linkAttrs, text(item.linkLabel), h('span', { 'aria-hidden': 'true' }, ' →')))
+              : null));
       });
     if (!items.length || !els.alsoBy) return;
     const who = text(CONFIG.CREATOR_NAME);
