@@ -38,6 +38,11 @@ const NH_CONFIG = {
   // Keep the counter hidden until the total reaches this number (1 = show right away).
   VISIT_COUNT_MIN: 1,
 
+  // Thin bar above the header announcing the new address. Visitors can close it
+  // (remembered on their device); it switches itself off after NEW_HOME_UNTIL.
+  SHOW_NEW_HOME: true,
+  NEW_HOME_UNTIL: '2026-11-30',
+
   // "Also by ..." box in the footer. Only list things that are live.
   // url can be '' (shows the name without a link). The helpline lines are optional.
   ALSO_BY: [
@@ -671,6 +676,22 @@ const NH_CONFIG = {
     if (!line || !els.upcomingFollow) return;
     els.upcomingFollow.replaceChildren(...Array.from(line.childNodes));
     els.upcomingFollow.hidden = false;
+  }
+
+  // "New home!" bar
+  const NEW_HOME_KEY = 'nagpur-happenings:newhome-dismissed';
+  function showNewHome() {
+    const bar = document.getElementById('newhome');
+    if (!bar || !CONFIG.SHOW_NEW_HOME) return;
+    const until = text(CONFIG.NEW_HOME_UNTIL);
+    if (until && nowInCity().iso > until) return;
+    try { if (localStorage.getItem(NEW_HOME_KEY) === '1') return; } catch (e) { /* storage blocked: just show it */ }
+    bar.hidden = false;
+    document.getElementById('newhome-close').addEventListener('click', () => {
+      bar.hidden = true;
+      try { localStorage.setItem(NEW_HOME_KEY, '1'); } catch (e) { /* ignore */ }
+      track('newhome-dismiss');
+    });
   }
 
   // Footer box: "Also by Arinjay"
@@ -1497,6 +1518,7 @@ const NH_CONFIG = {
     renderCreator();
     renderFollowLine();
     renderAlsoBy();
+    showNewHome();
     loadCounter();
     showVisitCount();
     pendingEventId = eventIdFromHash();

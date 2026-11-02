@@ -170,6 +170,7 @@ Other settings in the same block:
 | `TIMEZONE` | `Asia/Kolkata` | "Today" and past/upcoming are worked out in Nagpur time, whatever the visitor's device timezone |
 | `CREATOR_…` | your details | The "Made by" credit in the footer and the Instagram button in event pop-ups |
 | `GOATCOUNTER_CODE` | empty | Turns on the visit counter (step 7) |
+| `SHOW_NEW_HOME`, `NEW_HOME_UNTIL` | `true`, `2026-11-30` | The "New home! We're now at nagpurhappenings.in" bar above the header; visitors can close it, and it switches off after that date |
 | `SHOW_VISIT_COUNT` | `true` | Shows the odometer visit count in the footer (step 7) |
 | `VISIT_COUNT_SINCE` | `31 Oct 2026` | The date in "visits since …" |
 | `VISIT_COUNT_MIN` | `1` | Keeps the odometer hidden until the total reaches this number |
