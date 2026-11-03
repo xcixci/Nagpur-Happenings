@@ -80,7 +80,7 @@ Keep these header names in row 1. The order doesn't matter, and extra columns (f
 | Registration URL | Link for the **Register** button. Must start with `https://` or `www.` | `https://…` |
 | Ticket Price | Number in rupees or short text. Optional. | `300` |
 | Free or Paid | `Free` or `Paid` | `Paid` |
-| Cover Image URL | Optional direct link to an image (`https://…jpg`) | |
+| Cover Image URL | Optional poster. A Google Drive share link works (the file must be shared as *Anyone with the link*), or a direct image link. Don't paste Instagram image links: they expire within days. | `https://drive.google.com/file/d/…/view` |
 | Status | `Draft`, `Published`, `Cancelled` or `Completed` | `Published` |
 | Featured | `Yes` or `No` | `No` |
 | Who can join | Optional. Leave blank when it's open to all. Up to 3, separated by commas. Shown as a purple tag. Use *Neurodivergent-friendly* only when the organiser says so. | `Kids 6–12`, `18+`, `Women only, Neurodivergent-friendly` |
@@ -248,6 +248,19 @@ It counts page visits without cookies, so no cookie banner is needed. It also co
 Every event pop-up has **Share on WhatsApp** and **Copy link**. The link looks like `…/nagpur-happenings/#event=NH-012` and opens the calendar straight to that event. You can build these links yourself for Instagram stories and bios: your site address + `#event=` + the Event ID.
 
 Each pop-up also has **Open in Google Maps** (searches the venue and area) and **Something wrong or changed? Tell Arinjay**, with buttons to message @arinjayxci on Instagram or email community@arinjay.email. The email subject is filled in with the event name and ID, so you know which row to fix.
+
+## Organiser logos (Organisers tab)
+
+The `Organisers` tab has two columns that matter: **Name** and **Logo URL**. When an event has no poster, its popup shows the logo of the organiser whose Name matches the event's *Organiser Name* (capitals, spaces and punctuation are ignored). With no poster and no logo, the popup shows a coloured tile for the category.
+
+1. Put the logo in a Google Drive folder shared as *Anyone with the link*.
+2. Right-click the file → **Share → Copy link**, and paste it into *Logo URL*.
+
+Square logos look best. The *Notes* column is never published.
+
+## Poster upload question (manual, one time)
+
+Google doesn't let scripts create upload questions, so add it by hand: open the form → **+** → **File upload** → title *Poster (square or 4:5 works best)* → allow only *Image*, max 1 file, 10 MB. Uploading asks people to sign in with Google. Uploaded posters land in your Drive; share that folder as *Anyone with the link* so the posters can show on the site, then copy each file's link into *Cover Image URL*.
 
 ## Updating the feed script (Code.gs)
 

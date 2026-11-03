@@ -25,6 +25,10 @@ var SHEET_NAME = 'Events';
 // calendar (columns: Date, Name). Leave it out and nothing is shown.
 var DAYS_SHEET_NAME = 'Days';
 
+// Optional tab: one row per organiser (Name, Logo URL). The logo shows on every
+// event by that organiser that has no poster of its own.
+var ORGANISERS_SHEET_NAME = 'Organisers';
+
 // true: cancelled events are sent too (shown as "Cancelled" on the calendar,
 //       never in the upcoming list).
 // false: strictly Published events only.
@@ -113,7 +117,7 @@ function buildFeed_() {
   var range = sheet.getDataRange();
   var values = range.getValues();
   var shown = range.getDisplayValues();
-  if (!values.length || (values.length === 1 && values[0].join('') === '')) return feed_([], tz, readDays_(ss, tz));
+  if (!values.length || (values.length === 1 && values[0].join('') === '')) return feed_([], tz, readDays_(ss, tz), readOrganisers_(ss));
 
   var columns = mapColumns_(values[0]);
   if (columns.title === undefined || columns.date === undefined || columns.status === undefined) {
@@ -132,10 +136,10 @@ function buildFeed_() {
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
 
-  return feed_(events, tz, readDays_(ss, tz));
+  return feed_(events, tz, readDays_(ss, tz), readOrganisers_(ss));
 }
 
-function feed_(events, tz, days) {
+function feed_(events, tz, days, organisers) {
   return {
     ok: true,
     source: 'Nagpur Happenings',
@@ -143,8 +147,31 @@ function feed_(events, tz, days) {
     generatedAt: Utilities.formatDate(new Date(), 'Asia/Kolkata', "yyyy-MM-dd'T'HH:mm:ssXXX"),
     count: events.length,
     events: events,
-    days: days || []
+    days: days || [],
+    organisers: organisers || []
   };
+}
+
+// Organisers tab → [{ name, logoUrl }]. Only these two columns are published.
+function readOrganisers_(ss) {
+  var sheet = ss.getSheetByName(ORGANISERS_SHEET_NAME);
+  if (!sheet) return [];
+  var values = sheet.getDataRange().getDisplayValues();
+  if (values.length < 2) return [];
+  var nameCol = -1, logoCol = -1;
+  values[0].forEach(function (header, i) {
+    var key = normKey_(header);
+    if (nameCol < 0 && (key === 'name' || key === 'organiser' || key === 'organizer' || key === 'organisername' || key === 'organizername')) nameCol = i;
+    if (logoCol < 0 && (key === 'logourl' || key === 'logo' || key === 'imageurl' || key === 'image' || key === 'photo')) logoCol = i;
+  });
+  if (nameCol < 0 || logoCol < 0) return [];
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    var name = String(values[r][nameCol] || '').trim();
+    var logo = String(values[r][logoCol] || '').trim();
+    if (name && /^https?:\/\//i.test(logo)) out.push({ name: name, logoUrl: logo });
+  }
+  return out;
 }
 
 // Reads the optional Days tab: one row per day, columns Date and Name.

@@ -42,7 +42,7 @@
         </svg>
         <div>
           <h1 class="masthead__title">Nagpur Happenings</h1>
-          <p class="masthead__tagline">Discover what's happening in Nagpur.</p>
+          <p class="masthead__tagline">Nagpur, there's more happening than you think.</p>
         </div>
       </div>
       <a class="btn btn--outline masthead__submit" href="#submit" data-submit-link>Submit an event</a>
@@ -60,11 +60,17 @@
           <button type="button" class="icon-btn" id="prev-month" aria-label="Previous month">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button type="button" class="btn btn--small" id="today-btn">Today</button>
+          <button type="button" class="btn btn--small" id="today-btn">This month</button>
           <button type="button" class="icon-btn" id="next-month" aria-label="Next month">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
+      </div>
+
+      <div class="quick" role="group" aria-label="Quick look">
+        <button type="button" class="quick__btn" data-quick="today">Today</button>
+        <button type="button" class="quick__btn" data-quick="weekend">This weekend</button>
+        <button type="button" class="quick__btn" data-quick="week">Next 7 days</button>
       </div>
 
       <div class="filters" id="filters" role="group" aria-label="Filter events by category"></div>
@@ -102,6 +108,7 @@
             <a class="btn btn--outline" id="request-button" href="#submit" data-request-link>Request an event</a>
           </p>
           <p class="submit__note" id="submit-note">Every submission is reviewed before it appears on the calendar.</p>
+          <p class="submit__note"><button type="button" class="link-btn submit__guide" data-about="guidelines">What gets listed?</button></p>
         </div>
       </div>
     </section>
@@ -120,6 +127,7 @@
           <li><a href="#submit" data-submit-link>Submit an Event</a></li>
           <li><a href="#submit" data-request-link>Request an Event</a></li>
           <li><button type="button" class="link-btn" id="about-btn">About</button></li>
+          <li><button type="button" class="link-btn" data-about="privacy">Privacy</button></li>
           <li id="contact-item"><a id="contact-link" href="#">Contact</a></li>
           <li id="instagram-item"><a id="instagram-link" href="#" target="_blank" rel="noopener noreferrer">Instagram</a></li>
         </ul>
@@ -147,6 +155,24 @@
       <p>Nagpur Happenings is an independent calendar of offline things to do in Nagpur: book clubs, board-game and chess meetups, open mics, theatre, music, workshops, talks, walks and community gatherings.</p>
       <p>Organisers submit their events, and each one is reviewed before it is listed. Details can change, so check with the organiser before you head out.</p>
       <p>It starts at Zero Mile, in the Orange City and Tiger Capital of India. Nagpur first, more cities soon.</p>
+
+      <h3 class="dialog__subhead" id="guidelines">What gets listed</h3>
+      <ul class="dialog__list">
+        <li>Events in Nagpur that anyone can turn up to, with a date, a place (or an online link) and a way to join.</li>
+        <li>Book clubs, quizzes, games, workshops, walks, talks, performances, markets and community meetups. Free and paid.</li>
+        <li>Not listed: courses and admissions, product sales and offers, or anything without a date.</li>
+        <li>Every submission is checked before it goes live. We may shorten or correct details, or decline a listing.</li>
+        <li>Organisers are responsible for their events. Please confirm details with them before you go or pay.</li>
+      </ul>
+
+      <h3 class="dialog__subhead" id="privacy">Privacy</h3>
+      <ul class="dialog__list">
+        <li>You don't need an account or a login to browse.</li>
+        <li>Visits and clicks are counted with GoatCounter, which doesn't use cookies or follow you across other websites.</li>
+        <li>When you submit an event, your private email or phone is used only to reach you about it. It is never shown on the site, shared or sold. The public contact you choose is shown with your event.</li>
+        <li>Poster uploads go through Google Forms, which asks you to sign in with Google.</li>
+        <li>To change or remove anything you've sent, email <a href="mailto:community@arinjay.email">community@arinjay.email</a>.</li>
+      </ul>
     </div>
   </dialog>
 

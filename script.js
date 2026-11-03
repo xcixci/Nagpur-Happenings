@@ -150,6 +150,7 @@ const NH_CONFIG = {
     sample: false,
     view: { y: 2026, m: 0 },
     filters: new Set(),
+    logos: new Map(),     // organiser name (normalised) -> logo URL, from the Organisers tab
     agendaOpen: null,     // 'y-m' of a month whose full list is open
     upcomingOpen: false,
   };
@@ -222,6 +223,17 @@ const NH_CONFIG = {
     } catch (e) {
       return '';
     }
+  }
+
+  // Poster and logo links: https images, Google Drive share links (shown via Google's
+  // image server), or files in this site's own assets/ folder.
+  function imageUrl(value) {
+    const s = String(value || '').trim();
+    if (!s) return '';
+    if (/^assets\/[\w./-]+\.(webp|png|jpe?g|gif|svg)$/i.test(s) && !s.includes('..')) return s;
+    const drive = s.match(/^https?:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/([\w-]{20,})|(?:open|uc)\?(?:[^#]*?&)?id=([\w-]{20,}))/i);
+    if (drive) return 'https://lh3.googleusercontent.com/d/' + (drive[1] || drive[2]) + '=w1000';
+    return safeUrl(s);
   }
 
   function isEmail(value) {
@@ -376,7 +388,7 @@ const NH_CONFIG = {
       registrationUrl: safeUrl(raw.registrationUrl),
       ticketPrice: text(raw.ticketPrice),
       priceType: priceType(raw.priceType, raw.ticketPrice),
-      coverImageUrl: safeUrl(raw.coverImageUrl),
+      coverImageUrl: imageUrl(raw.coverImageUrl),
       // "Who can join", e.g. "Kids 6–12" or "18+, Neurodivergent-friendly". Blank = open to all.
       audience: text(raw.audience).split(/\s*[,;\n]\s*/).filter(Boolean).slice(0, 3).map((a) => a.slice(0, 40)),
       status,
@@ -646,7 +658,7 @@ const NH_CONFIG = {
   // Phone share sheet (Instagram, Telegram, Messages...). Hidden where the browser has none.
   function nativeShareButton(ev) {
     if (typeof navigator.share !== 'function') return null;
-    const btn = h('button', { type: 'button', class: 'btn btn--line' }, 'More ways to share');
+    const btn = h('button', { type: 'button', class: 'ev__choice' }, 'Other apps');
     btn.addEventListener('click', () => {
       const when = [longDate(ev.date), timeRange(ev)].filter(Boolean).join(', ');
       const body = [ev.title, when, placeLabel(ev)].filter(Boolean).join('\n');
@@ -784,9 +796,9 @@ const NH_CONFIG = {
     }
   }
 
-  function writeCache(events, days) {
+  function writeCache(events, days, organisers) {
     try {
-      window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), events, days: days || [] }));
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), events, days: days || [], organisers: organisers || [] }));
     } catch (e) {
       /* storage full or blocked: carry on without caching */
     }
@@ -813,13 +825,13 @@ const NH_CONFIG = {
       }
       if (!data || data.ok === false) throw new Error((data && data.error) || 'The events feed reported an error.');
       if (!Array.isArray(data.events)) throw new Error('The events feed has no "events" list.');
-      return { events: data.events, days: Array.isArray(data.days) ? data.days : [] };
+      return { events: data.events, days: Array.isArray(data.days) ? data.days : [], organisers: Array.isArray(data.organisers) ? data.organisers : [] };
     } finally {
       if (timer) clearTimeout(timer);
     }
   }
 
-  function applyEvents(rawEvents, rawDays) {
+  function applyEvents(rawEvents, rawDays, rawOrganisers) {
     state.events = rawEvents
       .map((raw, i) => normalizeEvent(raw, i))
       .filter(Boolean)
@@ -831,6 +843,12 @@ const NH_CONFIG = {
       if (!name || !parseIso(date)) return;
       if (!state.days.has(date)) state.days.set(date, []);
       state.days.get(date).push(name);
+    });
+    state.logos = new Map();
+    (Array.isArray(rawOrganisers) ? rawOrganisers : []).forEach((o) => {
+      const key = norm(o && o.name);
+      const url = imageUrl(o && o.logoUrl);
+      if (key && url) state.logos.set(key, url);
     });
     state.loaded = true;
     if (!viewChosenByVisitor && !pendingEventId) pickStartMonth();
@@ -849,7 +867,7 @@ const NH_CONFIG = {
     const cached = readCache();
     const age = cached ? Date.now() - cached.savedAt : Infinity;
     const fresh = cached && age >= 0 && age < CACHE_MS;
-    if (cached) applyEvents(cached.events, cached.days);
+    if (cached) applyEvents(cached.events, cached.days, cached.organisers);
     if (fresh && !force) {
       setStatus('');
       return;
@@ -859,8 +877,8 @@ const NH_CONFIG = {
     const showLoading = setTimeout(() => setStatus('loading', 'Loading events…'), 300);
     try {
       const feed = await fetchEvents();
-      writeCache(feed.events, feed.days);
-      applyEvents(feed.events, feed.days);
+      writeCache(feed.events, feed.days, feed.organisers);
+      applyEvents(feed.events, feed.days, feed.organisers);
       setStatus('');
     } catch (err) {
       console.error('[Nagpur Happenings] Could not load events:', err);
@@ -904,7 +922,7 @@ const NH_CONFIG = {
     }
     state.sample = true;
     const wantsEvent = Boolean(pendingEventId);
-    applyEvents(data.events, data.days);
+    applyEvents(data.events, data.days, data.organisers);
     if (state.events.length && !wantsEvent) {
       const first = parseIso(state.events[0].date);
       state.view = { y: first.y, m: first.m };
@@ -1204,8 +1222,9 @@ const NH_CONFIG = {
     }
   }
 
-  function showInDialog(nodes) {
+  function showInDialog(nodes, mode) {
     const dialog = els.eventDialog;
+    dialog.classList.toggle('dialog--event', mode === 'event');
     els.dialogContent.replaceChildren(...nodes.filter(Boolean));
     const wasOpen = dialog.open;
     openDialog(dialog);
@@ -1229,89 +1248,258 @@ const NH_CONFIG = {
     return h('span', null, value);
   }
 
-  function fact(label, ...lines) {
-    const content = lines.filter(Boolean);
+
+  /* ---------------------------------------------------------------
+     Icons (outline, 24px grid)
+     --------------------------------------------------------------- */
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const ICONS = {
+    calendar: [['rect', { x: 3.5, y: 5, width: 17, height: 15.5, rx: 2 }], ['path', { d: 'M8 3v4M16 3v4M3.5 10h17' }]],
+    calendarPlus: [['rect', { x: 3.5, y: 5, width: 17, height: 15.5, rx: 2 }], ['path', { d: 'M8 3v4M16 3v4M3.5 10h17M12 12.6v5M9.5 15.1h5' }]],
+    pin: [['path', { d: 'M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z' }], ['circle', { cx: 12, cy: 10.5, r: 2.3 }]],
+    users: [['circle', { cx: 9, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 19.5v-.8A4.2 4.2 0 0 1 7.7 14.5h2.6a4.2 4.2 0 0 1 4.2 4.2v.8M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.3 14.6a4.2 4.2 0 0 1 3.2 4.1v.8' }]],
+    ticket: [['path', { d: 'M3.5 6.5h17v3a2.5 2.5 0 0 0 0 5v3h-17v-3a2.5 2.5 0 0 0 0-5z' }], ['path', { d: 'M14.5 7v1.4M14.5 11.3v1.4M14.5 15.6V17' }]],
+    person: [['circle', { cx: 12, cy: 8, r: 3.5 }], ['path', { d: 'M5 20a7 7 0 0 1 14 0' }]],
+    share: [['circle', { cx: 17.5, cy: 5.5, r: 2.3 }], ['circle', { cx: 6.5, cy: 12, r: 2.3 }], ['circle', { cx: 17.5, cy: 18.5, r: 2.3 }], ['path', { d: 'M8.6 10.8l6.8-4M8.6 13.2l6.8 4' }]],
+    arrow: [['path', { d: 'M7 17 17 7M9 7h8v8' }]],
+  };
+  function icon(name, size = 18) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    [['viewBox', '0 0 24 24'], ['width', size], ['height', size], ['fill', 'none'], ['stroke', 'currentColor'],
+      ['stroke-width', '1.7'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round'], ['aria-hidden', 'true'], ['focusable', 'false'],
+    ].forEach(([k, v]) => svg.setAttribute(k, String(v)));
+    svg.setAttribute('class', 'icon');
+    (ICONS[name] || []).forEach(([tag, attrs]) => {
+      const el = document.createElementNS(SVG_NS, tag);
+      Object.keys(attrs).forEach((k) => el.setAttribute(k, String(attrs[k])));
+      svg.appendChild(el);
+    });
+    return svg;
+  }
+
+  /* ---------------------------------------------------------------
+     Add to calendar: Google Calendar link and an .ics file
+     (Apple Calendar, Outlook, Proton). Times are Nagpur time.
+     --------------------------------------------------------------- */
+  function stampUtc(iso, hhmm, addMinutes) {
+    const p = parseIso(iso);
+    const [hh, mm] = hhmm.split(':').map(Number);
+    const d = new Date(Date.UTC(p.y, p.m, p.d, hh, mm) - 330 * 60000 + (addMinutes || 0) * 60000);
+    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z';
+  }
+  function stampDay(iso, addDays) {
+    const p = parseIso(iso);
+    const d = new Date(Date.UTC(p.y, p.m, p.d + (addDays || 0)));
+    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate());
+  }
+  function calendarTimes(ev) {
+    if (!ev.startTime) return { allDay: true, start: stampDay(ev.date), end: stampDay(ev.date, 1) };
+    let end;
+    if (ev.endTime) {
+      end = minutesOf(ev.endTime) > minutesOf(ev.startTime)
+        ? stampUtc(ev.date, ev.endTime)
+        : stampUtc(ev.date, ev.endTime, 24 * 60); // ends after midnight
+    } else {
+      end = stampUtc(ev.date, ev.startTime, 120); // no end time: assume 2 hours
+    }
+    return { allDay: false, start: stampUtc(ev.date, ev.startTime), end };
+  }
+  function calendarDetails(ev) {
+    return [
+      ev.description.length > 600 ? ev.description.slice(0, 597) + '…' : ev.description,
+      ev.registrationUrl ? 'Register: ' + ev.registrationUrl : '',
+      'Details: ' + eventLink(ev),
+    ].filter(Boolean).join('\n\n');
+  }
+  function calendarPlace(ev) {
+    return [ev.venue, ev.area, 'Nagpur'].filter(Boolean).join(', ');
+  }
+  function googleCalendarUrl(ev) {
+    const t = calendarTimes(ev);
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent(ev.title)
+      + '&dates=' + t.start + '/' + t.end
+      + '&details=' + encodeURIComponent(calendarDetails(ev))
+      + '&location=' + encodeURIComponent(calendarPlace(ev))
+      + '&ctz=Asia%2FKolkata';
+  }
+  function icsEscape(value) {
+    return String(value).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  }
+  function icsFold(line) {
+    // Lines longer than 75 bytes are folded, as the calendar format requires
+    const enc = new TextEncoder();
+    const out = [];
+    let cur = '', bytes = 0;
+    for (const ch of line) {
+      const n = enc.encode(ch).length;
+      if (bytes + n > 74) { out.push(cur); cur = ' '; bytes = 1; }
+      cur += ch; bytes += n;
+    }
+    out.push(cur);
+    return out.join('\r\n');
+  }
+  function icsText(ev) {
+    const t = calendarTimes(ev);
+    const now = new Date();
+    const stamp = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + 'Z';
+    const host = (location.hostname || 'nagpurhappenings.in').replace(/[^\w.-]/g, '');
+    return [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nagpur Happenings//Calendar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      'UID:' + icsEscape(ev.id + '@' + host),
+      'DTSTAMP:' + stamp,
+      t.allDay ? 'DTSTART;VALUE=DATE:' + t.start : 'DTSTART:' + t.start,
+      t.allDay ? 'DTEND;VALUE=DATE:' + t.end : 'DTEND:' + t.end,
+      'SUMMARY:' + icsEscape(ev.title),
+      'LOCATION:' + icsEscape(calendarPlace(ev)),
+      'DESCRIPTION:' + icsEscape(calendarDetails(ev)),
+      'URL:' + eventLink(ev),
+      'END:VEVENT', 'END:VCALENDAR',
+    ].map(icsFold).join('\r\n') + '\r\n';
+  }
+  function fileSlug(title) {
+    return (norm(title).slice(0, 40) || 'event');
+  }
+
+  /* ---------------------------------------------------------------
+     Event popup: a card with picture, key facts and three actions
+     --------------------------------------------------------------- */
+  function eventImage(ev) {
+    if (ev.coverImageUrl) return { src: ev.coverImageUrl, kind: 'poster' };
+    const logo = state.logos.get(norm(ev.organiserName));
+    return logo ? { src: logo, kind: 'logo' } : null;
+  }
+
+  function eventMedia(ev) {
+    const p = parseIso(ev.date);
+    const img = eventImage(ev);
+    const media = h('div', { class: 'ev__media cat-' + ev.category + ' ' + (img ? 'ev__media--' + img.kind : 'ev__media--tile') },
+      h('p', { class: 'ev__tile', 'aria-hidden': 'true' }, categoryName(ev.category)));
+    if (img) {
+      const picture = h('img', {
+        class: 'ev__img', src: img.src, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer',
+        alt: img.kind === 'logo' ? (ev.organiserName || 'Organiser') + ' logo' : 'Poster for ' + ev.title,
+      });
+      picture.addEventListener('error', () => {
+        (picture.parentElement && picture.parentElement.classList.contains('ev__img-link') ? picture.parentElement : picture).remove();
+        media.classList.remove('ev__media--poster', 'ev__media--logo');
+        media.classList.add('ev__media--tile');
+      });
+      media.appendChild(img.kind === 'poster'
+        ? h('a', { class: 'ev__img-link', href: img.src, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('poster', ev) }, picture)
+        : picture);
+    }
+    media.appendChild(h('p', { class: 'ev__date', 'aria-hidden': 'true' },
+      h('span', { class: 'ev__date-wd' }, WEEKDAYS_SHORT[weekdayOf(p.y, p.m, p.d)]),
+      h('span', { class: 'ev__date-d' }, String(p.d)),
+      h('span', { class: 'ev__date-m' }, MONTHS_SHORT[p.m])));
+    if (ev.status !== 'Cancelled' && ev.priceType) {
+      const free = ev.priceType === 'Free';
+      media.appendChild(h('p', { class: 'ev__price ev__price--' + (free ? 'free' : 'paid'), 'aria-hidden': 'true' },
+        free ? 'Free entry' : (ev.ticketPrice ? formatPrice(ev.ticketPrice) : 'Paid')));
+    }
+    return media;
+  }
+
+  function factRow(iconName, label, ...lines) {
+    const content = lines.flat().filter(Boolean);
     if (!content.length) return null;
     return h('div', { class: 'facts__row' },
-      h('dt', null, label),
+      h('dt', null, icon(iconName, 19), h('span', { class: 'visually-hidden' }, label)),
       h('dd', null, content.map((line, i) => (i ? [h('br'), line] : line))));
   }
 
-  function openEvent(id, backToIso) {
+  function backLink(backTo) {
+    if (!backTo) return null;
+    let label, open;
+    if (typeof backTo === 'string') {
+      const p = parseIso(backTo);
+      label = 'All events on ' + p.d + ' ' + MONTHS[p.m];
+      open = () => openDay(backTo);
+    } else {
+      ({ label, open } = backTo);
+    }
+    return h('button', { type: 'button', class: 'dialog__back', onclick: open }, chevronLeft(), label);
+  }
+
+  // A button that shows/hides a small panel of choices under the action buttons
+  function disclosure(btn, panel, others) {
+    btn.addEventListener('click', () => {
+      const open = panel.hidden;
+      others.forEach(([b, p]) => { p.hidden = true; b.setAttribute('aria-expanded', 'false'); });
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  }
+
+  function openEvent(id, backTo) {
     const ev = state.events.find((e) => e.id === id);
     if (!ev) return;
     const now = nowInCity();
     const cancelled = ev.status === 'Cancelled';
     const ended = hasEnded(ev, now);
-    const nodes = [];
 
-    if (backToIso) {
-      const p = parseIso(backToIso);
-      nodes.push(h('button', { type: 'button', class: 'dialog__back', onclick: () => openDay(backToIso) },
-        chevronLeft(), 'All events on ' + p.d + ' ' + MONTHS[p.m]));
-    }
+    // Short lede under the title; long descriptions continue below the actions
+    const desc = ev.description;
+    const firstPara = desc.split(/\n\s*\n/)[0];
+    const sentence = (firstPara.match(/^.{20,180}?[.!?](?=\s|$)/) || [])[0];
+    const lede = desc.length <= 180 ? desc : (sentence || firstPara.slice(0, 150).replace(/\s+\S*$/, '') + '…');
+    const restOfDesc = desc.length <= 180 ? '' : desc;
 
-    if (ev.coverImageUrl) {
-      const img = h('img', {
-        class: 'dialog__cover', src: ev.coverImageUrl, alt: '', loading: 'lazy',
-        referrerpolicy: 'no-referrer', decoding: 'async',
-      });
-      img.addEventListener('error', () => img.remove());
-      nodes.push(img);
-    }
-
-    nodes.push(h('p', { class: 'dialog__tags cat-' + ev.category },
+    const area = ev.area ? h('span', { class: 'tag tag--place' }, icon('pin', 14), ev.area) : null;
+    const chips = h('p', { class: 'dialog__tags cat-' + ev.category },
       h('span', { class: 'tag tag--category' }, h('i', { class: 'dot', 'aria-hidden': 'true' }), categoryName(ev.category)),
-      ev.featured && !cancelled ? tag('Featured', 'tag--featured') : null));
-
-    nodes.push(h('h2', { class: 'dialog__title' + (cancelled ? ' is-cancelled' : ''), id: 'dialog-title', tabindex: '-1', 'data-event-id': ev.id }, ev.title));
-
-    if (cancelled) {
-      nodes.push(h('p', { class: 'notice notice--cancelled' }, 'This event has been cancelled.'));
-    } else if (ended) {
-      nodes.push(h('p', { class: 'notice' }, 'This event has ended.'));
-    }
+      area,
+      ev.featured && !cancelled ? tag('Featured', 'tag--featured') : null,
+      !cancelled ? ev.audience.map((a) => tag(a, 'tag--audience')) : null);
 
     const where = ev.area ? ev.area + ', Nagpur' : (ev.venue ? 'Nagpur' : '');
     const maps = ev.venue || ev.area
       ? h('a', { class: 'maps-link', href: mapsUrl(ev), target: '_blank', rel: 'noopener noreferrer', onclick: () => track('maps', ev) }, 'Open in Google Maps')
       : null;
-    nodes.push(h('dl', { class: 'facts' },
-      fact('When', longDate(ev.date), timeRange(ev), dayNames(ev.date) ? h('span', { class: 'facts__special' }, dayNames(ev.date)) : null),
-      fact('Where', ev.venue, where, maps),
-      fact('Entry', priceLabel(ev)),
-      ev.audience.length ? fact('Who can join', ev.audience.join(', ')) : null,
-      fact('Organiser', ev.organiserName, contactNode(ev.organiserContact))));
+    const special = dayNames(ev.date);
+    const facts = h('dl', { class: 'facts' },
+      factRow('calendar', 'When', longDate(ev.date), timeRange(ev), special ? h('span', { class: 'facts__special' }, special) : null),
+      factRow('pin', 'Where', ev.venue, where, maps),
+      factRow('ticket', 'Entry', priceLabel(ev)),
+      ev.audience.length ? factRow('person', 'Who can join', ev.audience.join(', ')) : null,
+      factRow('users', 'Organiser', ev.organiserName ? h('span', null, 'Organised by ', h('strong', null, ev.organiserName)) : null, contactNode(ev.organiserContact)));
 
-    if (ev.description) {
-      nodes.push(h('div', { class: 'dialog__desc' },
-        ev.description.split(/\n\s*\n/).map((para) => h('p', null, para))));
-    }
-
-    nodes.push(h('p', { class: 'dialog__disclaimer' },
-      'Listed for information only. Nagpur Happenings does not organise this event or handle bookings and payments. ' +
-      'Details can change, so confirm with the organiser before you go or pay.'));
-
-    const copyBtn = h('button', { type: 'button', class: 'btn btn--line' }, 'Copy link');
+    // Actions: Register, Share (WhatsApp / other apps / copy link), Add to calendar
+    const copyBtn = h('button', { type: 'button', class: 'ev__choice' }, 'Copy link');
     copyBtn.addEventListener('click', () => {
       copyToClipboard(eventLink(ev)).then(
         () => { copyBtn.textContent = 'Link copied'; track('copylink', ev); },
         () => { copyBtn.textContent = 'Copy failed'; });
       setTimeout(() => { copyBtn.textContent = 'Copy link'; }, 2500);
     });
-    nodes.push(h('p', { class: 'dialog__actions' },
-      ev.registrationUrl && !cancelled && !ended
-        ? h('a', { class: 'btn btn--accent', href: ev.registrationUrl, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('register', ev) }, 'Register')
-        : null,
+    const shareBtn = h('button', { type: 'button', class: 'btn btn--line', 'aria-expanded': 'false', 'aria-controls': 'ev-share' }, icon('share'), 'Share');
+    const shareMenu = h('div', { class: 'ev__menu', id: 'ev-share', hidden: true },
       h('a', {
-        class: 'btn btn--line', href: 'https://wa.me/?text=' + encodeURIComponent(shareText(ev)),
+        class: 'ev__choice', href: 'https://wa.me/?text=' + encodeURIComponent(shareText(ev)),
         target: '_blank', rel: 'noopener noreferrer', onclick: () => track('whatsapp', ev),
-      }, 'Share on WhatsApp'),
+      }, 'WhatsApp'),
       nativeShareButton(ev),
-      copyBtn));
+      copyBtn);
+    const canAdd = !cancelled && !ended;
+    const calBtn = canAdd ? h('button', { type: 'button', class: 'btn btn--line', 'aria-expanded': 'false', 'aria-controls': 'ev-cal' }, icon('calendarPlus'), 'Add to calendar') : null;
+    const calMenu = canAdd ? h('div', { class: 'ev__menu', id: 'ev-cal', hidden: true },
+      h('a', { class: 'ev__choice', href: googleCalendarUrl(ev), target: '_blank', rel: 'noopener noreferrer', onclick: () => track('calendar-google', ev) }, 'Google Calendar'),
+      h('a', {
+        class: 'ev__choice', href: 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsText(ev)),
+        download: fileSlug(ev.title) + '.ics', onclick: () => track('calendar-ics', ev),
+      }, 'Apple, Outlook or Proton (.ics)')) : null;
+    disclosure(shareBtn, shareMenu, calBtn ? [[calBtn, calMenu]] : []);
+    if (calBtn) disclosure(calBtn, calMenu, [[shareBtn, shareMenu]]);
 
-    nodes.push(followLine('follow-event', ev));
+    const register = ev.registrationUrl && !cancelled && !ended
+      ? h('a', { class: 'btn btn--accent', href: ev.registrationUrl, target: '_blank', rel: 'noopener noreferrer', onclick: () => track('register', ev) },
+        'Register / More info', icon('arrow', 17))
+      : null;
+    const actions = h('div', { class: 'dialog__actions ev__actions' }, register, shareBtn, calBtn, shareMenu, calMenu);
 
+    // "Something wrong or changed?" box
     const changedLinks = [];
     const handle = creatorHandle();
     if (handle) {
@@ -1328,16 +1516,94 @@ const NH_CONFIG = {
         onclick: () => track('update-email', ev),
       }, 'Email'));
     }
-    if (changedLinks.length) {
-      nodes.push(h('div', { class: 'changed' },
+
+    const body = h('div', { class: 'ev__body' },
+      backLink(backTo),
+      chips,
+      h('h2', { class: 'dialog__title' + (cancelled ? ' is-cancelled' : ''), id: 'dialog-title', tabindex: '-1', 'data-event-id': ev.id }, ev.title),
+      cancelled ? h('p', { class: 'notice notice--cancelled' }, 'This event has been cancelled.')
+        : ended ? h('p', { class: 'notice' }, 'This event has ended.') : null,
+      lede ? h('p', { class: 'ev__lede' }, lede) : null,
+      facts,
+      actions,
+      restOfDesc ? h('div', { class: 'dialog__desc' },
+        h('h3', { class: 'dialog__subhead' }, 'About this event'),
+        restOfDesc.split(/\n\s*\n/).map((para) => h('p', null, para))) : null,
+      h('p', { class: 'dialog__disclaimer' },
+        'Listed for information only. Nagpur Happenings does not organise this event or handle bookings and payments. ' +
+        'Details can change, so confirm with the organiser before you go or pay.'),
+      followLine('follow-event', ev),
+      changedLinks.length ? h('div', { class: 'changed' },
         text(CONFIG.CREATOR_PHOTO) ? avatar(true) : null,
         h('p', { class: 'changed__text' }, 'Something wrong or changed? Tell ' + (text(CONFIG.CREATOR_NAME) || 'us') + '.'),
-        h('p', { class: 'changed__links' }, changedLinks)));
-    }
+        h('p', { class: 'changed__links' }, changedLinks)) : null);
 
-    showInDialog(nodes);
+    showInDialog([h('article', { class: 'ev' }, eventMedia(ev), body)], 'event');
     setEventHash(ev);
     track('open', ev);
+  }
+
+  /* ---------------------------------------------------------------
+     Quick views: Today / This weekend / Next 7 days
+     --------------------------------------------------------------- */
+  const QUICK = {
+    today: { title: 'Today', empty: 'for today' },
+    weekend: { title: 'This weekend', empty: 'for this weekend' },
+    week: { title: 'Next 7 days', empty: 'for the next 7 days' },
+  };
+  function addDaysIso(now, n) {
+    const d = new Date(Date.UTC(now.y, now.m, now.d + n));
+    return isoDate(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  }
+  function quickRange(kind, now) {
+    if (kind === 'today') return { from: now.iso, to: now.iso };
+    if (kind === 'weekend') {
+      const dow = weekdayOf(now.y, now.m, now.d); // 0 = Sunday
+      if (dow === 0) return { from: now.iso, to: now.iso };
+      const toSat = dow === 6 ? 0 : 6 - dow;
+      return { from: addDaysIso(now, toSat), to: addDaysIso(now, toSat + 1) };
+    }
+    return { from: now.iso, to: addDaysIso(now, 6) };
+  }
+  function rangeLabel(from, to) {
+    const a = parseIso(from), b = parseIso(to);
+    const day = (p) => WEEKDAYS_SHORT[weekdayOf(p.y, p.m, p.d)] + ' ' + p.d;
+    if (from === to) return longDate(from);
+    if (a.m === b.m) return day(a) + ' – ' + day(b) + ' ' + MONTHS[b.m];
+    return day(a) + ' ' + MONTHS_SHORT[a.m] + ' – ' + day(b) + ' ' + MONTHS_SHORT[b.m];
+  }
+  function openQuick(kind) {
+    const q = QUICK[kind];
+    if (!q) return;
+    const now = nowInCity();
+    const r = quickRange(kind, now);
+    const list = state.events.filter((ev) => ev.date >= r.from && ev.date <= r.to && passesFilter(ev));
+    const byDate = groupByDate(list);
+    const dates = new Set(byDate.keys());
+    state.days.forEach((names, iso) => { if (iso >= r.from && iso <= r.to) dates.add(iso); });
+    const back = { label: q.title, open: () => openQuick(kind) };
+    const groups = Array.from(dates).sort().map((iso) => {
+      const items = byDate.get(iso) || [];
+      const p = parseIso(iso);
+      const special = dayNames(iso);
+      return h('li', { class: 'agenda__day' + (iso === now.iso ? ' agenda__day--today' : '') + (items.length ? '' : ' agenda__day--quiet') },
+        h('h3', { class: 'agenda__date' },
+          h('span', { class: 'agenda__num' }, String(p.d)),
+          h('span', { class: 'agenda__wd' }, (iso === now.iso ? 'Today, ' : '') + WEEKDAYS[weekdayOf(p.y, p.m, p.d)]),
+          special ? h('span', { class: 'agenda__special' }, special) : null),
+        items.length ? h('ol', { class: 'event-list event-list--compact' }, items.map((ev) => eventRow(ev, { now, level: 4, backTo: back }))) : null);
+    });
+    track('quick-' + kind);
+    setEventHash(null);
+    showInDialog([
+      h('h2', { class: 'dialog__title', id: 'dialog-title', tabindex: '-1' }, q.title),
+      h('p', { class: 'dialog__sub' }, rangeLabel(r.from, r.to)),
+      list.length
+        ? h('ol', { class: 'agenda__days quick-days' }, groups)
+        : h('p', { class: 'empty-note' },
+          'Nothing listed ' + q.empty + ' yet' + (state.filters.size ? ' in the selected categories' : '') + '. ',
+          submitInlineLink('Know of something? Submit it.')),
+    ], 'list');
   }
 
   function openDay(iso) {
@@ -1354,7 +1620,7 @@ const NH_CONFIG = {
       dayNames(iso) ? h('p', { class: 'dialog__special' }, dayNames(iso)) : null,
       h('ol', { class: 'event-list event-list--compact event-list--dialog' },
         list.map((ev) => eventRow(ev, { now, level: 3, backTo: iso }))),
-    ]);
+    ], 'list');
   }
 
   function chevronLeft() {
@@ -1376,6 +1642,15 @@ const NH_CONFIG = {
     return svg;
   }
 
+  // About popup, optionally scrolled to a section (guidelines, privacy)
+  function openAbout(section) {
+    openDialog(els.aboutDialog);
+    const content = els.aboutDialog.querySelector('.dialog__content');
+    content.scrollTop = 0;
+    const target = section ? document.getElementById(section) : null;
+    if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+  }
+
   function wireDialogs() {
     [els.eventDialog, els.aboutDialog].forEach((dialog) => {
       dialog.addEventListener('click', (e) => {
@@ -1390,7 +1665,7 @@ const NH_CONFIG = {
         btn.addEventListener('click', () => closeDialog(dialog));
       });
     });
-    els.aboutBtn.addEventListener('click', () => openDialog(els.aboutDialog));
+    els.aboutBtn.addEventListener('click', () => openAbout());
   }
 
   /* ---------------------------------------------------------------
@@ -1513,6 +1788,12 @@ const NH_CONFIG = {
 
     buildWeekdays();
     buildFilters();
+    document.querySelectorAll('[data-quick]').forEach((btn) => {
+      btn.addEventListener('click', () => openQuick(btn.dataset.quick));
+    });
+    document.querySelectorAll('[data-about]').forEach((btn) => {
+      btn.addEventListener('click', () => openAbout(btn.dataset.about));
+    });
     wireDialogs();
     applyLinks();
     renderCreator();

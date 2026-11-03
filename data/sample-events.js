@@ -84,7 +84,7 @@ window.NH_SAMPLE_DATA = {
       "registrationUrl": "https://example.com/register",
       "ticketPrice": "150",
       "priceType": "Paid",
-      "coverImageUrl": "",
+      "coverImageUrl": "assets/og-card.png",
       "status": "Published",
       "featured": true
     },
@@ -462,6 +462,12 @@ window.NH_SAMPLE_DATA = {
     {
       "date": "2026-11-26",
       "name": "Constitution Day"
+    }
+  ],
+  "organisers": [
+    {
+      "name": "Sample Readers Circle",
+      "logoUrl": "assets/favicon.svg"
     }
   ]
 };
