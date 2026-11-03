@@ -1,0 +1,8 @@
+{
+  "name": "nagpur-happenings-previews",
+  "private": true,
+  "description": "Builds the link-preview page and card image for each event. See build.mjs.",
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

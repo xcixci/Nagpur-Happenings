@@ -151,6 +151,7 @@ const NH_CONFIG = {
     view: { y: 2026, m: 0 },
     filters: new Set(),
     logos: new Map(),     // organiser name (normalised) -> logo URL, from the Organisers tab
+    previews: new Set(),  // event IDs with their own link-preview page (e/NH-019/), from e/built.json
     agendaOpen: null,     // 'y-m' of a month whose full list is open
     upcomingOpen: false,
   };
@@ -235,6 +236,10 @@ const NH_CONFIG = {
     if (drive) return 'https://lh3.googleusercontent.com/d/' + (drive[1] || drive[2]) + '=w1000';
     return safeUrl(s);
   }
+
+  // Memorials, silent marches, vigils and protests get a quiet look: no bright tile, no price badge.
+  // Keep in step with tools/previews/build.mjs.
+  const QUIET_WORDS = /silent march|candle ?march|candlelight march|vigil|in (loving )?memory of|memorial (service|meet|gathering|prayer)|condolence|shra?ddh?anjali|श्रद्धांजल|prayer meet|rest in peace|remembrance|protest|dharna|मूक मोर्चा|mook morcha/i;
 
   function isEmail(value) {
     return /^[^\s@<>()]+@[^\s@<>()]+\.[^\s@<>()]+$/.test(String(value || '').trim());
@@ -393,6 +398,7 @@ const NH_CONFIG = {
       audience: text(raw.audience).split(/\s*[,;\n]\s*/).filter(Boolean).slice(0, 3).map((a) => a.slice(0, 40)),
       status,
       featured,
+      quiet: QUIET_WORDS.test(title + ' ' + text(raw.description)),
     };
   }
 
@@ -601,8 +607,22 @@ const NH_CONFIG = {
   /* ---------------------------------------------------------------
      Links to a single event (#event=NH-002) for sharing
      --------------------------------------------------------------- */
+  // Events with a preview page get nagpurhappenings.in/e/NH-002/ (WhatsApp and Instagram then show
+  // the event's own card); that page sends people on to #event=NH-002. Others use the # link directly.
   function eventLink(ev) {
-    return window.location.href.split('#')[0] + '#event=' + encodeURIComponent(ev.id);
+    const page = window.location.href.split('#')[0];
+    if (state.previews.has(ev.id)) return new URL('e/' + encodeURIComponent(ev.id) + '/', page).href;
+    return page + '#event=' + encodeURIComponent(ev.id);
+  }
+
+  function loadPreviewList() {
+    if (typeof fetch !== 'function') return;
+    fetch('e/built.json', { cache: 'no-cache' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.ids)) state.previews = new Set(data.ids.map(String));
+      })
+      .catch(() => { /* no preview pages yet: share links stay as #event= links */ });
   }
 
   function eventIdFromHash() {
@@ -1114,7 +1134,7 @@ const NH_CONFIG = {
           place ? h('span', null, place) : null)),
       h('p', { class: 'event-row__tags' },
         ev.status === 'Cancelled' ? tag('Cancelled', 'tag--cancelled') : null,
-        ev.featured && ev.status !== 'Cancelled' ? tag('Featured', 'tag--featured') : null,
+        ev.featured && !ev.quiet && ev.status !== 'Cancelled' ? tag('Featured', 'tag--featured') : null,
         ev.status !== 'Cancelled' ? ev.audience.map((a) => tag(a, 'tag--audience')) : null,
         price && ev.status !== 'Cancelled' ? tag(price, ev.priceType === 'Free' ? 'tag--free' : 'tag--paid') : null));
   }
@@ -1374,7 +1394,7 @@ const NH_CONFIG = {
   function eventMedia(ev) {
     const p = parseIso(ev.date);
     const img = eventImage(ev);
-    const media = h('div', { class: 'ev__media cat-' + ev.category + ' ' + (img ? 'ev__media--' + img.kind : 'ev__media--tile') },
+    const media = h('div', { class: 'ev__media cat-' + ev.category + ' ' + (img ? 'ev__media--' + img.kind : 'ev__media--tile') + (ev.quiet ? ' ev__media--quiet' : '') },
       h('p', { class: 'ev__tile', 'aria-hidden': 'true' }, categoryName(ev.category)));
     if (img) {
       const picture = h('img', {
@@ -1394,7 +1414,7 @@ const NH_CONFIG = {
       h('span', { class: 'ev__date-wd' }, WEEKDAYS_SHORT[weekdayOf(p.y, p.m, p.d)]),
       h('span', { class: 'ev__date-d' }, String(p.d)),
       h('span', { class: 'ev__date-m' }, MONTHS_SHORT[p.m])));
-    if (ev.status !== 'Cancelled' && ev.priceType) {
+    if (ev.status !== 'Cancelled' && ev.priceType && !ev.quiet) {
       const free = ev.priceType === 'Free';
       media.appendChild(h('p', { class: 'ev__price ev__price--' + (free ? 'free' : 'paid'), 'aria-hidden': 'true' },
         free ? 'Free entry' : (ev.ticketPrice ? formatPrice(ev.ticketPrice) : 'Paid')));
@@ -1451,7 +1471,7 @@ const NH_CONFIG = {
     const chips = h('p', { class: 'dialog__tags cat-' + ev.category },
       h('span', { class: 'tag tag--category' }, h('i', { class: 'dot', 'aria-hidden': 'true' }), categoryName(ev.category)),
       area,
-      ev.featured && !cancelled ? tag('Featured', 'tag--featured') : null,
+      ev.featured && !ev.quiet && !cancelled ? tag('Featured', 'tag--featured') : null,
       !cancelled ? ev.audience.map((a) => tag(a, 'tag--audience')) : null);
 
     const where = ev.area ? ev.area + ', Nagpur' : (ev.venue ? 'Nagpur' : '');
@@ -1478,7 +1498,9 @@ const NH_CONFIG = {
     const shareMenu = h('div', { class: 'ev__menu', id: 'ev-share', hidden: true },
       h('a', {
         class: 'ev__choice', href: 'https://wa.me/?text=' + encodeURIComponent(shareText(ev)),
-        target: '_blank', rel: 'noopener noreferrer', onclick: () => track('whatsapp', ev),
+        target: '_blank', rel: 'noopener noreferrer',
+        // Rebuilt on tap in case the preview-page list arrived after the pop-up opened
+        onclick: (e) => { e.currentTarget.href = 'https://wa.me/?text=' + encodeURIComponent(shareText(ev)); track('whatsapp', ev); },
       }, 'WhatsApp'),
       nativeShareButton(ev),
       copyBtn);
@@ -1802,6 +1824,7 @@ const NH_CONFIG = {
     showNewHome();
     loadCounter();
     showVisitCount();
+    loadPreviewList();
     pendingEventId = eventIdFromHash();
     window.addEventListener('hashchange', () => {
       const id = eventIdFromHash();

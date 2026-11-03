@@ -1,0 +1,146 @@
+<!doctype html>
+<!-- Template for event link-preview cards (1200 x 630). build.mjs fills it in with renderCard(). -->
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: var(--paper); }
+  .card { position: relative; display: grid; grid-template-columns: 630px 1fr; width: 1200px; height: 630px; background: var(--paper); color: var(--ink); }
+
+  /* Left square: poster, organiser logo, or a category tile */
+  .visual { position: relative; overflow: hidden; background: var(--cat); }
+  .visual__blur, .visual__img { position: absolute; display: none; }
+  .visual__blur { inset: -60px; width: calc(100% + 120px); height: calc(100% + 120px); object-fit: cover; filter: blur(32px) saturate(1.05); opacity: .9; }
+  .visual__img { inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .visual--poster .visual__blur, .visual--poster .visual__img, .visual--logo .visual__img { display: block; }
+  .visual--logo { background: #fff; box-shadow: inset -1px 0 0 var(--line); }
+  .visual--logo .visual__img { inset: 80px; width: calc(100% - 160px); height: calc(100% - 160px); }
+  .visual--tile::before {
+    content: ''; position: absolute; inset: 0; opacity: .16;
+    background: url('../../assets/tiger-coat.svg') repeat-x right center / auto 100%;
+  }
+  .visual__tile { display: none; }
+  .visual--tile .visual__tile {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0;
+    padding: 40px 70px; font: 400 62px/1.12 var(--serif); color: #FFF8EF; text-align: center; text-wrap: balance;
+  }
+  .badge { position: absolute; left: 30px; bottom: 30px; margin: 0; padding: 13px 24px 11px; border-radius: 999px; font: 700 26px/1 var(--sans); letter-spacing: .02em; }
+  .badge[hidden] { display: none; }
+  .badge--free { background: #DDF0D6; color: #1F5A2A; }
+  .badge--paid { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line-strong); }
+
+  /* Right: words */
+  .info { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 50px 56px 40px 54px; }
+  .info::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--orange); }
+  .brand { display: flex; align-items: center; gap: 12px; margin: 0; font: 400 30px/1 var(--serif); }
+  .brand .milestone { width: 25px; }
+  .kicker { margin: 34px 0 0; font: 700 20px/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--cat); }
+  .title {
+    margin: 12px 0 0; font: 400 60px/1.07 var(--serif); letter-spacing: -.01em; text-wrap: balance;
+    overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4;
+  }
+  .when { margin: 22px 0 0; font: 500 30px/1.25 var(--sans); }
+  .where, .by { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; }
+  .where { margin: 6px 0 0; font: 400 27px/1.3 var(--sans); color: var(--moss); -webkit-line-clamp: 2; }
+  .by { margin: 4px 0 0; font: 400 24px/1.3 var(--sans); color: var(--moss); -webkit-line-clamp: 1; }
+  .url { margin: auto 0 0; padding-top: 18px; font: 700 23px/1 var(--sans); color: var(--rind); letter-spacing: .01em; }
+  [hidden] { display: none !important; }
+
+  .card--cancelled .kicker { color: #B3261E; }
+  .card--cancelled .title { text-decoration: line-through; text-decoration-thickness: 3px; }
+
+  /* Quiet: memorials, silent marches, vigils, protests. Muted, no orange, no price, no stripes. */
+  .card--quiet, .card--quiet .info { background: #1E1C1A; color: #F2EBE1; }
+  .card--quiet .info::before, .card--quiet .kicker, .card--quiet .badge, .card--quiet .by { display: none !important; }
+  .card--quiet .brand { color: #ADA498; font-size: 26px; }
+  .card--quiet .milestone__body { fill: #1E1C1A; stroke: #ADA498; }
+  .card--quiet .milestone__cap { fill: #ADA498; stroke: #ADA498; }
+  .card--quiet .milestone__zero { fill: #ADA498; }
+  .card--quiet .title { margin-top: auto; }
+  .card--quiet .where { color: #BDB4A9; }
+  .card--quiet .url { color: #ADA498; font-weight: 500; }
+  .card--quiet .visual { background: #2A2725; }
+  .card--quiet .visual--tile::before { display: none; }
+  .card--quiet .visual--tile .visual__tile { color: #CFC6BB; }
+  .card--quiet .visual__blur { filter: blur(32px) grayscale(.5) brightness(.55); }
+  .card--quiet .visual--logo { background: #F2EBE1; box-shadow: none; }
+</style></head>
+<body>
+<div id="card" class="card">
+  <div id="visual" class="visual">
+    <img id="blur" class="visual__blur" alt="">
+    <img id="img" class="visual__img" alt="">
+    <p id="tile" class="visual__tile"></p>
+    <p id="badge" class="badge" hidden></p>
+  </div>
+  <div id="info" class="info">
+    <p class="brand">
+      <svg class="milestone" viewBox="0 0 40 52" aria-hidden="true">
+        <path class="milestone__body" d="M4 51V20a16 16 0 0 1 32 0v31z"/>
+        <path class="milestone__cap" d="M4 21v-1a16 16 0 0 1 32 0v1z"/>
+        <text class="milestone__zero" x="20" y="45" text-anchor="middle">0</text>
+      </svg>
+      Nagpur Happenings
+    </p>
+    <p id="kicker" class="kicker"></p>
+    <h1 id="title" class="title"></h1>
+    <p id="when" class="when"></p>
+    <p id="where" class="where"></p>
+    <p id="by" class="by"></p>
+    <p class="url">nagpurhappenings.in</p>
+  </div>
+</div>
+<script>
+  // Text goes in with textContent only, never as HTML.
+  function loadInto(img, src, ms) {
+    return new Promise((resolve) => {
+      if (!src) return resolve(false);
+      const done = (ok) => { clearTimeout(timer); img.onload = img.onerror = null; resolve(ok); };
+      const timer = setTimeout(() => done(false), ms);
+      img.onload = () => done(img.naturalWidth > 0);
+      img.onerror = () => done(false);
+      img.src = src;
+    });
+  }
+
+  window.renderCard = async function (d) {
+    const $ = (id) => document.getElementById(id);
+    const card = $('card'), visual = $('visual'), img = $('img'), blur = $('blur');
+    card.className = 'card cat-' + d.category + (d.quiet ? ' card--quiet' : '') + (d.cancelled ? ' card--cancelled' : '');
+    $('kicker').textContent = d.kicker || '';
+    $('title').textContent = d.title;
+    $('when').textContent = d.when || '';
+    $('where').textContent = d.where || '';
+    $('where').hidden = !d.where;
+    $('by').textContent = d.by ? 'by ' + d.by : '';
+    $('by').hidden = !d.by;
+    $('tile').textContent = d.tile || '';
+    const badge = $('badge');
+    badge.textContent = d.badge || '';
+    badge.className = 'badge' + (d.badgeKind ? ' badge--' + d.badgeKind : '');
+    badge.hidden = !d.badge;
+
+    img.removeAttribute('src');
+    blur.removeAttribute('src');
+    let mode = d.image ? d.imageKind : 'tile';
+    visual.className = 'visual visual--' + mode;
+    if (d.image) {
+      const ok = await loadInto(img, d.image, 25000);
+      if (!ok) {
+        mode = 'tile';
+        visual.className = 'visual visual--tile';
+      } else if (mode === 'poster') {
+        await loadInto(blur, d.image, 10000);
+      }
+    }
+
+    await document.fonts.ready;
+    // Shrink a long title until it and everything under it fit.
+    const title = $('title'), info = $('info');
+    for (let size = 60; size >= 40; size -= 2) {
+      title.style.fontSize = size + 'px';
+      if (title.scrollHeight <= title.clientHeight + 1 && info.scrollHeight <= info.clientHeight + 1) break;
+    }
+    return mode;
+  };
+</script>
+</body></html>

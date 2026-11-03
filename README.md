@@ -19,6 +19,9 @@ nagpur-happenings/
 ├── styles.css                  All styling (colours and fonts at the top)
 ├── script.js                   Calendar logic; your settings are at the very top
 ├── og-card-source.html         Source for the link-preview image (not part of the live page)
+├── 404.html                    Sends unknown addresses (and brand-new event links) to the calendar
+├── .github/workflows/pages.yml Builds and publishes the site every push and every hour
+├── tools/previews/             Makes a preview page + card image for each event (see "Sharing an event")
 ├── assets/
 │   ├── favicon.svg             Zero Mile milestone icon
 │   ├── tiger-coat.svg          Tiger stripes in the header (and preview card)
@@ -213,8 +216,8 @@ Running the script again does not make a second form; it just shows the links ag
 ## Step 6: Turn on GitHub Pages
 
 1. In the repository: **Settings → Pages**.
-2. Under *Build and deployment*, Source: **Deploy from a branch**. Branch: **main**, folder **/ (root)**. Click **Save**.
-3. Wait a minute or two and refresh. The page shows your site address, for example `https://your-username.github.io/nagpur-happenings/`.
+2. Under *Build and deployment*, Source: **GitHub Actions**. (The workflow in `.github/workflows/pages.yml` builds the site and the event preview cards, then publishes it.)
+3. Open the **Actions** tab, pick **Build and deploy site**, click **Run workflow**. Wait two or three minutes and refresh Settings → Pages. The page shows your site address, for example `https://your-username.github.io/nagpur-happenings/`.
 
 **Changing settings later:** open `script.js` on GitHub, click the pencil icon, edit, then **Commit changes**. The site updates within a couple of minutes.
 
@@ -245,7 +248,13 @@ It counts page visits without cookies, so no cookie banner is needed. It also co
 
 ## Sharing an event
 
-Every event pop-up has **Share on WhatsApp** and **Copy link**. The link looks like `…/nagpur-happenings/#event=NH-012` and opens the calendar straight to that event. You can build these links yourself for Instagram stories and bios: your site address + `#event=` + the Event ID.
+Every event pop-up has **Share** (WhatsApp, other apps, copy link). The link looks like `nagpurhappenings.in/e/NH-012/`. In WhatsApp, Instagram and most apps it shows **that event's own card** (title, date, place, and the poster or organiser logo), and opening it jumps straight to the event on the calendar. You can type these links yourself for Instagram stories and bios: `nagpurhappenings.in/e/` + the Event ID + `/`. The older form `nagpurhappenings.in/#event=NH-012` still works but shows the general site card.
+
+**How the cards are made:** every hour (and on every push) the workflow in `.github/workflows/pages.yml` reads the feed and draws a 1200 × 630 card for each event from two weeks ago onwards (`tools/previews/card.html` is the design, `tools/previews/build.mjs` does the work). The left half is the poster (Cover Image URL), or else the organiser's logo (Organisers tab), or else a category tile. A new event gets its card within the hour; to do it at once, Actions tab → **Build and deploy site** → **Run workflow**. Until then its link still works, with the general card. WhatsApp remembers a preview once a link has been shared, so a changed card shows for new shares only.
+
+**Quiet cards:** memorials, silent marches, vigils, condolence and prayer meets, and protests get a muted dark card with no orange, no price and no "by" line, and a muted tile in the pop-up. It switches on when the title or description contains words such as *silent march*, *candle march*, *vigil*, *in memory of*, *condolence*, *shraddhanjali / श्रद्धांजली*, *prayer meet*, *rest in peace*, *remembrance*, *protest*, *dharna* or *मूक मोर्चा* (list: `QUIET_WORDS` in `script.js` and `tools/previews/build.mjs`).
+
+**Hourly runs pause after 60 days without a commit** (a GitHub rule for scheduled workflows). If cards stop updating, open the Actions tab and re-enable the workflow, or make any small commit.
 
 Each pop-up also has **Open in Google Maps** (searches the venue and area) and **Something wrong or changed? Tell Arinjay**, with buttons to message @arinjayxci on Instagram or email community@arinjay.email. The email subject is filled in with the event name and ID, so you know which row to fix.
 

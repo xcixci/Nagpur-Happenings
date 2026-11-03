@@ -612,6 +612,11 @@ a.also__name:hover { color: var(--orange); }
 }
 .ev__price--free { background: #DDF0D6; color: #1F5A2A; }
 .ev__price--paid { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
+/* Quiet: memorials, silent marches, vigils, protests */
+.ev__media--quiet, .ev__media--quiet.ev__media--tile { background: #2A2725; }
+.ev__media--quiet.ev__media--logo { background: #fff; }
+.ev__media--quiet.ev__media--tile::before, .ev__media--quiet .ev__tile { display: none; }
+.ev__media--quiet .ev__date-wd { background: #3A3633; color: #F2EBE1; }
 .tag .icon { flex: none; }
 .tag--place { color: var(--ink); }
 .dialog--event .dialog__title { margin-right: 0; }
