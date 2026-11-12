@@ -145,6 +145,7 @@ const NH_CONFIG = {
   EVENTS_API_URL: 'https://script.google.com/macros/s/AKfy…/exec',   // from step 2
   SUBMIT_FORM_URL: 'https://forms.gle/…',                           // from step 4
   INSTAGRAM_URL: 'https://www.instagram.com/arinjayxci/',
+  WHATSAPP_CHANNEL_URL: 'https://whatsapp.com/channel/…',     // header, footer and follow lines
   CONTACT_EMAIL: 'community@arinjay.email',
   CREATOR_NAME: 'Arinjay',
   CREATOR_INSTAGRAM: 'arinjayxci',
@@ -155,7 +156,7 @@ const NH_CONFIG = {
 };
 ```
 
-Paste each link **between the quotes** and save. Leave a value as `''` if you don't have it yet: an empty Instagram or Contact hides that footer link, and an empty form link makes the submit button say "The submission form opens soon".
+Paste each link **between the quotes** and save. Leave a value as `''` if you don't have it yet: an empty Instagram or Contact hides that footer link, an empty WhatsApp channel hides the channel buttons, and an empty form link makes the submit button say "The submission form opens soon".
 
 **Before going live, create the address `community@arinjay.email`** in Proton Mail, where you manage the addresses for arinjay.email. The Contact link and every "Email" button on event pop-ups use it.
 

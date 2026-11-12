@@ -188,10 +188,17 @@ img { max-width: 100%; }
   margin-top: .3rem; font-family: var(--serif); font-style: italic;
   font-size: clamp(.96875rem, .9rem + .3vw, 1.1875rem); color: var(--ink);
  text-wrap: balance;}
-.masthead__submit {
-  display: none; flex: none; min-height: 2.5rem; padding: .4rem .9rem .35rem; font-size: .9375rem;
-  background: var(--surface); font-weight: 700;
+/* Submit + WhatsApp channel: a full-width row under the title on phones,
+   on the right of the title from 560px */
+.masthead__inner { flex-wrap: wrap; }
+.masthead__actions { display: flex; gap: .5rem; width: 100%; }
+.masthead__btn {
+  flex: 1 1 0; min-height: 2.75rem; padding: .45rem .6rem .4rem;
+  font-size: .9375rem; font-weight: 700; white-space: nowrap;
 }
+.masthead__btn--channel { border-color: var(--ink); background: var(--surface); color: var(--ink); }
+.masthead__btn--channel:hover { background: var(--paper-deep); }
+.masthead__btn svg { flex: none; }
 
 /* ---------- Calendar header ---------- */
 .calendar-section { padding-top: 1.25rem; }
@@ -673,7 +680,9 @@ a.also__name:hover { color: var(--orange); }
    Wider screens
    ===================================================================== */
 @media (min-width: 560px) {
-  .masthead__submit { display: inline-flex; }
+  .masthead__inner { flex-wrap: nowrap; }
+  .masthead__actions { width: auto; flex: none; }
+  .masthead__btn { flex: none; min-height: 2.5rem; padding: .4rem .9rem .35rem; }
   .masthead::after { width: min(36vw, 24rem); }
   .milestone { width: 2.5rem; }
   .cal-title { flex-direction: row; align-items: baseline; gap: .55rem; }
@@ -776,6 +785,6 @@ a.also__name:hover { color: var(--orange); }
 }
 
 @media print {
-  .filters, .quick, .cal-nav, .submit, .footer__nav, .status, .list-more, .follow-line, .also, .newhome { display: none !important; }
+  .masthead__actions, .filters, .quick, .cal-nav, .submit, .footer__nav, .status, .list-more, .follow-line, .also, .newhome { display: none !important; }
   .cal { box-shadow: none; }
 }

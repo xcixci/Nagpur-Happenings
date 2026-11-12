@@ -17,6 +17,10 @@ const NH_CONFIG = {
   // Instagram profile for the footer "Instagram" link.
   INSTAGRAM_URL: 'https://www.instagram.com/arinjayxci/',
 
+  // WhatsApp channel for the "WhatsApp channel" buttons (header, footer, follow lines).
+  // Empty = those buttons are hidden.
+  WHATSAPP_CHANNEL_URL: 'https://whatsapp.com/channel/0029VbA57ah6hENjdnba161t',
+
   // Email for the footer "Contact" link and the "Something changed?" button.
   CONTACT_EMAIL: 'community@arinjay.email',
 
@@ -693,14 +697,27 @@ const NH_CONFIG = {
     return handle ? 'https://www.instagram.com/' + handle + '/' : '';
   }
 
-  // "Event updates and more on Instagram: Follow @handle"
+  function channelUrl() {
+    return safeUrl(CONFIG.WHATSAPP_CHANNEL_URL);
+  }
+
+  // "New events on WhatsApp: Follow our channel. More on Instagram: @handle"
+  // Falls back to the Instagram-only line when no channel is set.
   function followLine(action, ev) {
     const url = followUrl();
-    if (!url) return null;
+    const channel = channelUrl();
+    if (!url && !channel) return null;
+    const igLink = url
+      ? h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', onclick: () => track(action, ev) },
+        channel ? '@' + creatorHandle() : 'Follow @' + creatorHandle())
+      : null;
+    if (!channel) return h('p', { class: 'follow-line' }, 'Event updates and more on Instagram: ', igLink);
     return h('p', { class: 'follow-line' },
-      'Event updates and more on Instagram: ',
-      h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', onclick: () => track(action, ev) },
-        'Follow @' + creatorHandle()));
+      'New events on WhatsApp: ',
+      h('a', { href: channel, target: '_blank', rel: 'noopener noreferrer',
+        onclick: () => track(action.replace(/^follow-/, 'channel-'), ev) }, 'Follow our channel'),
+      igLink ? '. More on Instagram: ' : '.',
+      igLink);
   }
 
   function renderFollowLine() {
@@ -1741,6 +1758,18 @@ const NH_CONFIG = {
       els.submitButton.classList.add('is-disabled');
       els.submitNote.textContent = 'The submission form opens soon. Every submission is reviewed before it appears on the calendar.';
     }
+
+    const channel = channelUrl();
+    document.querySelectorAll('[data-channel-link]').forEach((link) => {
+      if (channel) {
+        link.href = channel;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.addEventListener('click', () => track('channel-' + (link.closest('.masthead') ? 'header' : 'footer')));
+      } else {
+        (link.closest('li') || link).hidden = true;
+      }
+    });
 
     const instagram = safeUrl(CONFIG.INSTAGRAM_URL);
     if (instagram) els.instagramLink.href = instagram;
