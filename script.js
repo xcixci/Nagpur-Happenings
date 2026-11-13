@@ -21,6 +21,11 @@ const NH_CONFIG = {
   // Empty = those buttons are hidden.
   WHATSAPP_CHANNEL_URL: 'https://whatsapp.com/channel/0029VbA57ah6hENjdnba161t',
 
+  // Floating "Share an event" WhatsApp bubble (bottom-right). Country code + number,
+  // digits only. WHATSAPP_MESSAGE is typed into the chat for them. Empty number = no bubble.
+  WHATSAPP_NUMBER: '917972028618',
+  WHATSAPP_MESSAGE: "Hi Nagpur Happenings! I'd like to list my event.",
+
   // Email for the footer "Contact" link and the "Something changed?" button.
   CONTACT_EMAIL: 'community@arinjay.email',
 
@@ -1771,6 +1776,14 @@ const NH_CONFIG = {
       }
     });
 
+    const waNumber = text(CONFIG.WHATSAPP_NUMBER).replace(/\D/g, '');
+    if (els.waBubble && waNumber.length >= 10) {
+      const waMessage = text(CONFIG.WHATSAPP_MESSAGE);
+      els.waBubble.href = 'https://wa.me/' + waNumber + (waMessage ? '?text=' + encodeURIComponent(waMessage) : '');
+      els.waBubble.hidden = false;
+      els.waBubble.addEventListener('click', () => track('whatsapp-bubble'));
+    }
+
     const instagram = safeUrl(CONFIG.INSTAGRAM_URL);
     if (instagram) els.instagramLink.href = instagram;
     else els.instagramItem.hidden = true;
@@ -1833,6 +1846,7 @@ const NH_CONFIG = {
       instagramItem: byId('instagram-item'),
       contactLink: byId('contact-link'),
       contactItem: byId('contact-item'),
+      waBubble: byId('wa-bubble'),
       creator: byId('creator'),
       visits: byId('visits'),
     });

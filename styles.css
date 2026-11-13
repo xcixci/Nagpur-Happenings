@@ -440,9 +440,26 @@ img { max-width: 100%; }
 .newhome__close:hover { background: rgba(255, 244, 230, .12); }
 .newhome__close:focus-visible { outline: 2px solid var(--orange); outline-offset: 1px; }
 
+/* ---------- WhatsApp bubble ---------- */
+.wa-bubble {
+  position: fixed; z-index: 20;
+  right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: .6rem;
+  min-height: 3.25rem; padding: .325rem 1.15rem .325rem .325rem;
+  border-radius: 999px; background: var(--ink); color: var(--paper);
+  font: 700 1rem/1 var(--sans); text-decoration: none;
+  box-shadow: 0 0 0 2px var(--paper), 0 12px 28px -10px rgba(30, 59, 47, .65);
+}
+.wa-bubble[hidden] { display: none; }
+.wa-bubble:hover { background: var(--ink-hover); color: var(--paper); }
+.wa-bubble:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+.wa-bubble__icon {
+  flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem;
+  border-radius: 50%; background: #25D366; color: var(--ink);
+}
+
 /* ---------- Footer ---------- */
-.footer { position: relative; overflow: hidden; background: var(--ink); color: var(--paper); }
-/* Faint tiger coat in the corner */
+.footer { position: relative; overflow: hidden; background: var(--ink); color: var(--paper); }/* Faint tiger coat in the corner */
 .footer::before {
   content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 18rem; opacity: .16;
   background: url('assets/tiger-coat-orange.svg') repeat-x right center / auto 100%;
@@ -450,7 +467,8 @@ img { max-width: 100%; }
   mask-image: linear-gradient(to right, transparent, #000 70%);
   pointer-events: none;
 }
-.footer__inner { position: relative; display: grid; gap: 1.5rem; padding-block: 2.75rem 2rem; }
+/* Bottom padding leaves room so the WhatsApp bubble never covers the last lines */
+.footer__inner { position: relative; display: grid; gap: 1.5rem; padding-block: 2.75rem 5.5rem; }
 .footer__name { font-family: var(--serif); font-size: 1.625rem; line-height: 1.1; }
 .footer__tagline { margin-top: .3rem; font-family: var(--serif); font-style: italic; color: #D9DDCF; }
 .footer__place { margin-top: .6rem; font-size: .9375rem; color: #F5B97F; }
@@ -785,6 +803,6 @@ a.also__name:hover { color: var(--orange); }
 }
 
 @media print {
-  .masthead__actions, .filters, .quick, .cal-nav, .submit, .footer__nav, .status, .list-more, .follow-line, .also, .newhome { display: none !important; }
+  .masthead__actions, .filters, .quick, .cal-nav, .submit, .footer__nav, .status, .list-more, .follow-line, .also, .newhome, .wa-bubble { display: none !important; }
   .cal { box-shadow: none; }
 }
