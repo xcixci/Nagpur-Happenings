@@ -24,10 +24,8 @@ nagpur-happenings/
 ├── tools/previews/             Makes a preview page + card image for each event (see "Sharing an event")
 ├── assets/
 │   ├── favicon.svg             Zero Mile milestone icon
-│   ├── tiger-coat.svg          Tiger stripes in the header (and preview card)
-│   ├── tiger-coat-orange.svg   Faint stripes in the footer
 │   ├── og-card.png             Preview image shown when the link is shared
-│   └── fonts/                  Mukta + Tiro Devanagari Marathi (self-hosted, open licence)
+│   └── fonts/                  Mukta + Eczar (self-hosted, open licence)
 ├── data/
 │   └── sample-events.js        Illustrative sample events for previewing (not real events)
 ├── google-apps-script/
@@ -222,7 +220,7 @@ Running the script again does not make a second form; it just shows the links ag
 
 **Changing settings later:** open `script.js` on GitHub, click the pencil icon, edit, then **Commit changes**. The site updates within a couple of minutes.
 
-**Turn on the link preview:** open `index.html` on GitHub (pencil icon) and replace both `YOUR-SITE-ADDRESS` with your real address, for example `your-username.github.io/nagpur-happenings`. Commit. Now when the link is pasted into WhatsApp or Instagram it shows the orange tiger-stripe card (`assets/og-card.png`) instead of a bare link. WhatsApp caches previews, so test with a link you haven't shared before.
+**Turn on the link preview:** open `index.html` on GitHub (pencil icon) and replace both `YOUR-SITE-ADDRESS` with your real address, for example `your-username.github.io/nagpur-happenings`. Commit. Now when the link is pasted into WhatsApp or Instagram it shows the Nagpur Happenings card (`assets/og-card.png`) instead of a bare link. WhatsApp caches previews, so test with a link you haven't shared before.
 
 A custom domain (like `nagpurhappenings.in`) can be added under **Settings → Pages → Custom domain** once you own one. If you add one, update `YOUR-SITE-ADDRESS` to match.
 
@@ -253,7 +251,7 @@ Every event pop-up has **Share** (WhatsApp, other apps, copy link). The link loo
 
 **How the cards are made:** every hour (and on every push) the workflow in `.github/workflows/pages.yml` reads the feed and draws a 1200 × 630 card for each event from two weeks ago onwards (`tools/previews/card.html` is the design, `tools/previews/build.mjs` does the work). The left half is the poster (Cover Image URL), or else the organiser's logo (Organisers tab), or else a category tile. A new event gets its card within the hour; to do it at once, Actions tab → **Build and deploy site** → **Run workflow**. Until then its link still works, with the general card. WhatsApp remembers a preview once a link has been shared, so a changed card shows for new shares only.
 
-**Quiet cards:** memorials, silent marches, vigils, condolence and prayer meets, and protests get a muted dark card with no orange, no price and no "by" line, and a muted tile in the pop-up. It switches on when the title or description contains words such as *silent march*, *candle march*, *vigil*, *in memory of*, *condolence*, *shraddhanjali / श्रद्धांजली*, *prayer meet*, *rest in peace*, *remembrance*, *protest*, *dharna* or *मूक मोर्चा* (list: `QUIET_WORDS` in `script.js` and `tools/previews/build.mjs`).
+**Quiet cards:** memorials, silent marches, vigils, condolence and prayer meets, and protests get a muted dark card with no green band, no price and no "by" line, and a muted tile in the pop-up. It switches on when the title or description contains words such as *silent march*, *candle march*, *vigil*, *in memory of*, *condolence*, *shraddhanjali / श्रद्धांजली*, *prayer meet*, *rest in peace*, *remembrance*, *protest*, *dharna* or *मूक मोर्चा* (list: `QUIET_WORDS` in `script.js` and `tools/previews/build.mjs`).
 
 **Hourly runs pause after 60 days without a commit** (a GitHub rule for scheduled workflows). If cards stop updating, open the Actions tab and re-enable the workflow, or make any small commit.
 
@@ -284,7 +282,7 @@ Don't use *New deployment*: that makes a new link, and the website would still r
 ## Day to day
 
 - **Add an event:** new row in `Events`, Status `Published`.
-- **Feature an event:** set Featured to `Yes`. It gets an orange outline on the calendar and a *Featured* tag in the lists. The order stays chronological.
+- **Feature an event:** set Featured to `Yes`. It gets an orange outline on the calendar and a *Featured* tag with an orange dot in the lists. The order stays chronological.
 - **Cancel an event:** change Status to `Cancelled`. Don't delete the row; people who saw it will see it's off.
 - **After it's over:** nothing to do. Past events stay on the calendar (dimmed) and drop out of *Coming Up* automatically. Mark them `Completed` only if you want them off the calendar.
 
@@ -363,5 +361,7 @@ The data already supports what paid listings would need: *Free or Paid*, *Ticket
 
 ## Credits
 
-- Fonts: [Mukta](https://github.com/EkType/Mukta) by Ek Type and [Tiro Devanagari Marathi](https://github.com/TiroTypeworks/Indigo) by Tiro Typeworks, both under the SIL Open Font License (licence files in `assets/fonts/`). Both include Devanagari, so Marathi and Hindi event titles display properly.
+- Fonts: [Mukta](https://github.com/EkType/Mukta) by Ek Type and [Eczar](https://github.com/rosettatype/eczar) by Rosetta, both under the SIL Open Font License (licence files in `assets/fonts/`). Both include Devanagari, so Marathi and Hindi event titles display properly.
 - Sample events are fictional.
+- Category icons: [Tabler Icons](https://tabler.io/icons), MIT licence.
+- Brand colours, fonts and rules: see the Brand Sheet in Notion.

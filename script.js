@@ -111,7 +111,7 @@ const NH_CONFIG = {
 
   const CONFIG = NH_CONFIG;
 
-  // Category colours live in styles.css (.cat-books etc.). Keys must match.
+  // Category icons live in ICONS below (cat_books etc.). Keys must match.
   const CATEGORIES = [
     { key: 'books', name: 'Books & Literature', short: 'Books' },
     { key: 'games', name: 'Board Games & Chess', short: 'Games & chess' },
@@ -992,7 +992,7 @@ const NH_CONFIG = {
           onFiltersChanged();
         },
       },
-      h('span', { class: 'dot', 'aria-hidden': 'true' }),
+      catIcon(c.key, 16),
       h('span', { class: 'filter__full' }, c.name),
       h('span', { class: 'filter__short', 'aria-hidden': 'true' }, c.short));
       els.filterButtons.push(btn);
@@ -1038,6 +1038,7 @@ const NH_CONFIG = {
       'aria-label': bits + ', ' + extra.join(', '),
       onclick: () => openEvent(ev.id),
     },
+    catIcon(ev.category, 13),
     time ? h('span', { class: 'chip__time' }, time) : null,
     h('span', { class: 'chip__title' }, ev.title));
   }
@@ -1092,7 +1093,7 @@ const NH_CONFIG = {
             onclick: () => openDay(iso),
           }, '+' + (list.length - MAX_PER_DAY) + ' more'));
         }
-        // Mobile view: coloured dots plus one big tap target for the day
+        // Mobile view: one dot per event (up to 4) plus one big tap target for the day
         cell.appendChild(h('span', { class: 'day__dots', 'aria-hidden': 'true' },
           list.slice(0, 4).map((ev) => h('i', { class: 'dot cat-' + ev.category + (ev.status === 'Cancelled' ? ' dot--cancelled' : '') }))));
         cell.appendChild(h('button', {
@@ -1151,7 +1152,7 @@ const NH_CONFIG = {
         h(titleTag, { class: 'event-row__title' },
           h('button', { type: 'button', class: 'event-row__open', onclick: () => openEvent(ev.id, opts.backTo) }, ev.title)),
         h('p', { class: 'event-row__meta' },
-          h('span', { class: 'event-row__cat' }, h('i', { class: 'dot', 'aria-hidden': 'true' }), categoryName(ev.category)),
+          h('span', { class: 'event-row__cat' }, catIcon(ev.category, 16), categoryName(ev.category)),
           time ? h('span', null, time) : null,
           place ? h('span', null, place) : null)),
       h('p', { class: 'event-row__tags' },
@@ -1304,6 +1305,15 @@ const NH_CONFIG = {
     person: [['circle', { cx: 12, cy: 8, r: 3.5 }], ['path', { d: 'M5 20a7 7 0 0 1 14 0' }]],
     share: [['circle', { cx: 17.5, cy: 5.5, r: 2.3 }], ['circle', { cx: 6.5, cy: 12, r: 2.3 }], ['circle', { cx: 17.5, cy: 18.5, r: 2.3 }], ['path', { d: 'M8.6 10.8l6.8-4M8.6 13.2l6.8 4' }]],
     arrow: [['path', { d: 'M7 17 17 7M9 7h8v8' }]],
+    // Category icons: Tabler Icons (MIT), see the Brand Sheet
+    cat_books: [['path', { d: "M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12" }], ['path', { d: "M19 16h-12a2 2 0 0 0 -2 2" }], ['path', { d: "M9 8h6" }]],
+    cat_games: [['path', { d: "M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14" }], ['path', { d: "M8 8.5a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0", fill: "currentColor" }], ['path', { d: "M15 8.5a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0", fill: "currentColor" }], ['path', { d: "M15 15.5a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0", fill: "currentColor" }], ['path', { d: "M8 15.5a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0", fill: "currentColor" }], ['path', { d: "M11.5 12a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0", fill: "currentColor" }]],
+    cat_arts: [['path', { d: "M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" }], ['path', { d: "M7.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" }], ['path', { d: "M11.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" }], ['path', { d: "M15.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" }]],
+    cat_music: [['path', { d: "M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" }], ['path', { d: "M13 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" }], ['path', { d: "M9 17v-13h10v13" }], ['path', { d: "M9 8h10" }]],
+    cat_learning: [['path', { d: "M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" }], ['path', { d: "M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" }], ['path', { d: "M9.7 17l4.6 0" }]],
+    cat_community: [['path', { d: "M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" }], ['path', { d: "M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1" }], ['path', { d: "M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" }], ['path', { d: "M17 10h2a2 2 0 0 1 2 2v1" }], ['path', { d: "M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" }], ['path', { d: "M3 13v-1a2 2 0 0 1 2 -2h2" }]],
+    cat_outdoors: [['path', { d: "M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" }], ['path', { d: "M15 21l0 -3" }], ['path', { d: "M8 13l-2 -2" }], ['path', { d: "M8 12l2 -2" }], ['path', { d: "M8 21v-13" }], ['path', { d: "M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4l-.176 -.005" }]],
+    cat_other: [['path', { d: "M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6" }]],
   };
   function icon(name, size = 18) {
     const svg = document.createElementNS(SVG_NS, 'svg');
@@ -1316,6 +1326,12 @@ const NH_CONFIG = {
       Object.keys(attrs).forEach((k) => el.setAttribute(k, String(attrs[k])));
       svg.appendChild(el);
     });
+    return svg;
+  }
+  // Category icon in the current text colour (replaces the old colour dots)
+  function catIcon(key, size = 16) {
+    const svg = icon(ICONS['cat_' + key] ? 'cat_' + key : 'cat_other', size);
+    svg.setAttribute('class', 'icon icon--cat');
     return svg;
   }
 
@@ -1417,7 +1433,7 @@ const NH_CONFIG = {
     const p = parseIso(ev.date);
     const img = eventImage(ev);
     const media = h('div', { class: 'ev__media cat-' + ev.category + ' ' + (img ? 'ev__media--' + img.kind : 'ev__media--tile') + (ev.quiet ? ' ev__media--quiet' : '') },
-      h('p', { class: 'ev__tile', 'aria-hidden': 'true' }, categoryName(ev.category)));
+      h('p', { class: 'ev__tile', 'aria-hidden': 'true' }, catIcon(ev.category, 44), h('span', null, categoryName(ev.category))));
     if (img) {
       const picture = h('img', {
         class: 'ev__img', src: img.src, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer',
@@ -1491,7 +1507,7 @@ const NH_CONFIG = {
 
     const area = ev.area ? h('span', { class: 'tag tag--place' }, icon('pin', 14), ev.area) : null;
     const chips = h('p', { class: 'dialog__tags cat-' + ev.category },
-      h('span', { class: 'tag tag--category' }, h('i', { class: 'dot', 'aria-hidden': 'true' }), categoryName(ev.category)),
+      h('span', { class: 'tag tag--category' }, catIcon(ev.category, 14), categoryName(ev.category)),
       area,
       ev.featured && !ev.quiet && !cancelled ? tag('Featured', 'tag--featured') : null,
       !cancelled ? ev.audience.map((a) => tag(a, 'tag--audience')) : null);
