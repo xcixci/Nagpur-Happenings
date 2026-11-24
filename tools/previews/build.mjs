@@ -202,7 +202,7 @@ function previewPage(ev, version) {
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${esc(title + ': ' + desc)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#F08A2E">
+<meta name="theme-color" content="#0E451C">
 <link rel="icon" href="${esc(SITE_PATH)}assets/favicon.svg" type="image/svg+xml">
 <script>location.replace(${JSON.stringify(target)});</script>
 </head><body style="font-family:system-ui,sans-serif;padding:2rem">

@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Zero Mile milestone -->
-  <path d="M14 61V27a18 18 0 0 1 36 0v34z" fill="#FFF4E6" stroke="#1E3B2F" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M14 29v-2a18 18 0 0 1 36 0v2z" fill="#F08A2E" stroke="#1E3B2F" stroke-width="3.5" stroke-linejoin="round"/>
-  <ellipse cx="32" cy="45" rx="6.5" ry="9" fill="none" stroke="#1E3B2F" stroke-width="4"/>
+  <!-- Zero Mile milestone: green cap, white stone, small orange dot -->
+  <path d="M14 61V27a18 18 0 0 1 36 0v34z" fill="#FFFFFF" stroke="#0E451C" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M14 31v-4a18 18 0 0 1 36 0v4z" fill="#0E451C" stroke="#0E451C" stroke-width="3.5" stroke-linejoin="round"/>
+  <ellipse cx="32" cy="46" rx="6.5" ry="9" fill="none" stroke="#0E451C" stroke-width="4"/>
+  <circle cx="53" cy="10" r="5" fill="#F16E03"/>
 </svg>

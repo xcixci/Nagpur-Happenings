@@ -14,14 +14,10 @@
   .visual--poster .visual__blur, .visual--poster .visual__img, .visual--logo .visual__img { display: block; }
   .visual--logo { background: #fff; box-shadow: inset -1px 0 0 var(--line); }
   .visual--logo .visual__img { inset: 80px; width: calc(100% - 160px); height: calc(100% - 160px); }
-  .visual--tile::before {
-    content: ''; position: absolute; inset: 0; opacity: .16;
-    background: url('../../assets/tiger-coat.svg') repeat-x right center / auto 100%;
-  }
   .visual__tile { display: none; }
   .visual--tile .visual__tile {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0;
-    padding: 40px 70px; font: 400 62px/1.12 var(--serif); color: #FFF8EF; text-align: center; text-wrap: balance;
+    padding: 40px 70px; font: 600 62px/1.12 var(--serif); color: var(--on-ink); text-align: center; text-wrap: balance;
   }
   .badge { position: absolute; left: 30px; bottom: 30px; margin: 0; padding: 13px 24px 11px; border-radius: 999px; font: 700 26px/1 var(--sans); letter-spacing: .02em; }
   .badge[hidden] { display: none; }
@@ -30,12 +26,12 @@
 
   /* Right: words */
   .info { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 50px 56px 40px 54px; }
-  .info::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--orange); }
-  .brand { display: flex; align-items: center; gap: 12px; margin: 0; font: 400 30px/1 var(--serif); }
+  .info::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--ink); }
+  .brand { display: flex; align-items: center; gap: 12px; margin: 0; font: 600 30px/1 var(--serif); }
   .brand .milestone { width: 25px; }
-  .kicker { margin: 34px 0 0; font: 700 20px/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--cat); }
+  .kicker { margin: 34px 0 0; font: 700 20px/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-hover); }
   .title {
-    margin: 12px 0 0; font: 400 60px/1.07 var(--serif); letter-spacing: -.01em; text-wrap: balance;
+    margin: 12px 0 0; font: 600 60px/1.1 var(--serif); letter-spacing: -.01em; text-wrap: balance;
     overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4;
   }
   .when { margin: 22px 0 0; font: 500 30px/1.25 var(--sans); }
@@ -48,18 +44,18 @@
   .card--cancelled .kicker { color: #B3261E; }
   .card--cancelled .title { text-decoration: line-through; text-decoration-thickness: 3px; }
 
-  /* Quiet: memorials, silent marches, vigils, protests. Muted, no orange, no price, no stripes. */
+  /* Quiet: memorials, silent marches, vigils, protests. Muted, no green band, no price. */
   .card--quiet, .card--quiet .info { background: #1E1C1A; color: #F2EBE1; }
   .card--quiet .info::before, .card--quiet .kicker, .card--quiet .badge, .card--quiet .by { display: none !important; }
   .card--quiet .brand { color: #ADA498; font-size: 26px; }
   .card--quiet .milestone__body { fill: #1E1C1A; stroke: #ADA498; }
   .card--quiet .milestone__cap { fill: #ADA498; stroke: #ADA498; }
   .card--quiet .milestone__zero { fill: #ADA498; }
+  .card--quiet .milestone__dot { display: none; }
   .card--quiet .title { margin-top: auto; }
   .card--quiet .where { color: #BDB4A9; }
   .card--quiet .url { color: #ADA498; font-weight: 500; }
   .card--quiet .visual { background: #2A2725; }
-  .card--quiet .visual--tile::before { display: none; }
   .card--quiet .visual--tile .visual__tile { color: #CFC6BB; }
   .card--quiet .visual__blur { filter: blur(32px) grayscale(.5) brightness(.55); }
   .card--quiet .visual--logo { background: #F2EBE1; box-shadow: none; }
@@ -78,6 +74,7 @@
         <path class="milestone__body" d="M4 51V20a16 16 0 0 1 32 0v31z"/>
         <path class="milestone__cap" d="M4 21v-1a16 16 0 0 1 32 0v1z"/>
         <text class="milestone__zero" x="20" y="45" text-anchor="middle">0</text>
+        <circle class="milestone__dot" cx="37" cy="7" r="3.2"/>
       </svg>
       Nagpur Happenings
     </p>
@@ -134,11 +131,13 @@
     }
 
     await document.fonts.ready;
-    // Shrink a long title until it and everything under it fit.
+    // Shrink a long title until it and everything under it fit. Eczar's descenders reach a
+    // little below the last line box, so allow for that before calling it a fifth line.
     const title = $('title'), info = $('info');
     for (let size = 60; size >= 40; size -= 2) {
       title.style.fontSize = size + 'px';
-      if (title.scrollHeight <= title.clientHeight + 1 && info.scrollHeight <= info.clientHeight + 1) break;
+      const slack = Math.ceil(size * 0.35);
+      if (title.scrollHeight <= title.clientHeight + slack && info.scrollHeight <= info.clientHeight + 1) break;
     }
     return mode;
   };
