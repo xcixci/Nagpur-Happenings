@@ -151,7 +151,7 @@ const NH_CONFIG = {
   CREATOR_INSTAGRAM: 'arinjayxci',
   CREATOR_SITE_URL: 'https://xci.cx',
   CREATOR_PHOTO: '',              // e.g. 'assets/arinjay.jpg'
-  GOATCOUNTER_CODE: '',           // from step 7
+  UMAMI_WEBSITE_ID: '949e7954-0606-40fd-82e0-bea8f37222ea',  // from step 7
   ...
 };
 ```
@@ -173,9 +173,9 @@ Other settings in the same block:
 | `WEEK_STARTS_ON` | `1` | `1` = Monday first, `0` = Sunday first |
 | `TIMEZONE` | `Asia/Kolkata` | "Today" and past/upcoming are worked out in Nagpur time, whatever the visitor's device timezone |
 | `CREATOR_…` | your details | The "Made by" credit in the footer and the Instagram button in event pop-ups |
-| `GOATCOUNTER_CODE` | empty | Turns on the visit counter (step 7) |
+| `UMAMI_WEBSITE_ID` | `949e7954-0606-40fd-82e0-bea8f37222ea` | Turns on visit and click counting (step 7) |
 | `SHOW_NEW_HOME`, `NEW_HOME_UNTIL` | `true`, `2026-11-30` | The "New home! We're now at nagpurhappenings.in" bar above the header; visitors can close it, and it switches off after that date |
-| `SHOW_VISIT_COUNT` | `true` | Shows the odometer visit count in the footer (step 7) |
+| `SHOW_VISIT_COUNT` | `false` | Shows the odometer visit count in the footer (step 7) |
 | `VISIT_COUNT_SINCE` | `31 Oct 2026` | The date in "visits since …" |
 | `VISIT_COUNT_MIN` | `1` | Keeps the odometer hidden until the total reaches this number |
 
@@ -226,12 +226,11 @@ Running the script again does not make a second form; it just shows the links ag
 
 A custom domain (like `nagpurhappenings.in`) can be added under **Settings → Pages → Custom domain** once you own one. If you add one, update `YOUR-SITE-ADDRESS` to match.
 
-## Step 7: Turn on the visit counter (optional, free)
+## Step 7: Turn on analytics (Umami)
 
-1. Sign up at [goatcounter.com](https://www.goatcounter.com) (free for non-commercial sites). Pick a code, e.g. `nagpurhappenings`; your dashboard will be `nagpurhappenings.goatcounter.com`.
-2. Put the code in `script.js`: `GOATCOUNTER_CODE: 'nagpurhappenings'`. Commit.
-3. For the public odometer in the footer: in GoatCounter, **Settings → Main → Allow adding visitor counts on your website**. The wheels roll into place when a visitor scrolls to the footer.
-4. Don't count yourself: on each browser you use, open your site with `#toggle-goatcounter` at the end of the address and reload until a popup says tracking is disabled. WhatsApp and Instagram open links in their own built-in browsers, so do it in those too. Or add your IP under **Settings → Tracking → Ignore IPs**.
+Visits and clicks are counted with [Umami](https://umami.is). The website id is already in `script.js` as `UMAMI_WEBSITE_ID`. The page loads `https://cloud.umami.is/script.js` with that id, and only counts visits on `nagpurhappenings.in` and `www.nagpurhappenings.in`.
+
+Don't count yourself: on each browser you use, open the site, open the browser console, and run `localStorage.setItem('umami.disabled', 1)`. WhatsApp and Instagram open links in their own built-in browsers, so do it in those too.
 
 It counts page visits without cookies, so no cookie banner is needed. It also counts clicks, each tagged with the event ID:
 
