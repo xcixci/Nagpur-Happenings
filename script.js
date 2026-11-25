@@ -36,13 +36,11 @@ const NH_CONFIG = {
   // Your photo, e.g. 'assets/arinjay.jpg' (square works best). Empty shows your initial.
   CREATOR_PHOTO: '',
 
-  // Free visit counter from goatcounter.com: paste your code, e.g. 'nagpurhappenings'
-  // (the part before .goatcounter.com). Empty = no tracking. (README, step 7)
-  GOATCOUNTER_CODE: 'nagpurhappenings',
+  // Umami website id (cloud.umami.is). Empty = no tracking. (README, step 7)
+  UMAMI_WEBSITE_ID: '949e7954-0606-40fd-82e0-bea8f37222ea',
 
-  // Rolling "odometer" visit counter in the footer. Needs "Allow adding visitor
-  // counts on your website" switched on in GoatCounter's settings. Set to false to hide.
-  SHOW_VISIT_COUNT: true,
+  // Rolling "odometer" visit counter in the footer. Set to false to hide.
+  SHOW_VISIT_COUNT: false,
   VISIT_COUNT_SINCE: '31 Oct 2026',
   // Keep the counter hidden until the total reaches this number (1 = show right away).
   VISIT_COUNT_MIN: 1,
@@ -450,36 +448,23 @@ const NH_CONFIG = {
   }
 
   /* ---------------------------------------------------------------
-     Visit counter (GoatCounter). Does nothing until GOATCOUNTER_CODE is set.
+     Visit counter (Umami). Does nothing until UMAMI_WEBSITE_ID is set.
      --------------------------------------------------------------- */
   function loadCounter() {
-    const code = text(CONFIG.GOATCOUNTER_CODE).toLowerCase();
-    if (!/^[a-z0-9-]+$/.test(code)) return;
+    const id = text(CONFIG.UMAMI_WEBSITE_ID).toLowerCase();
+    if (!/^[a-z0-9-]+$/.test(id)) return;
     const script = document.createElement('script');
     script.async = true;
-    script.src = 'https://gc.zgo.at/count.js';
-    script.setAttribute('data-goatcounter', 'https://' + code + '.goatcounter.com/count');
+    script.src = 'https://cloud.umami.is/script.js';
+    script.setAttribute('data-website-id', id);
+    script.setAttribute('data-domains', 'nagpurhappenings.in,www.nagpurhappenings.in');
     document.head.appendChild(script);
   }
 
-  // Public visit count in the footer (site total from GoatCounter), shown as an
-  // odometer whose digits roll into place when the footer scrolls into view.
+  // Public visit count in the footer, shown as an odometer whose digits roll
+  // into place when the footer scrolls into view. Off while SHOW_VISIT_COUNT is false.
   async function showVisitCount() {
-    const code = text(CONFIG.GOATCOUNTER_CODE).toLowerCase();
-    if (!CONFIG.SHOW_VISIT_COUNT || !/^[a-z0-9-]+$/.test(code) || !els.visits) return;
-    try {
-      const res = await fetch('https://' + code + '.goatcounter.com/counter/TOTAL.json', { cache: 'no-store' });
-      if (!res.ok) return; // setting not switched on yet, or no data
-      const data = await res.json();
-      const raw = text(data && data.count);
-      if (!/^[\d,.\s]+$/.test(raw)) return;
-      const total = parseInt(raw.replace(/\D/g, ''), 10);
-      const min = Math.max(1, Number(CONFIG.VISIT_COUNT_MIN) || 1);
-      if (!Number.isFinite(total) || total < min) return;
-      renderOdometer(total);
-    } catch (e) {
-      /* counter unavailable: show nothing */
-    }
+    if (!CONFIG.SHOW_VISIT_COUNT || !els.visits) return;
   }
 
   function renderOdometer(total) {
@@ -529,18 +514,18 @@ const NH_CONFIG = {
   let trackTimer = null;
 
   function counterReady() {
-    return Boolean(window.goatcounter && typeof window.goatcounter.count === 'function');
+    return Boolean(window.umami && typeof window.umami.track === 'function');
   }
 
   function flushTrackQueue() {
     while (trackQueue.length && counterReady()) {
-      try { window.goatcounter.count(trackQueue.shift()); } catch (e) { /* ignore */ }
+      try { window.umami.track(trackQueue.shift()); } catch (e) { /* ignore */ }
     }
   }
 
   function track(action, ev) {
-    if (!/^[a-z0-9-]+$/i.test(text(CONFIG.GOATCOUNTER_CODE))) return;
-    trackQueue.push({ path: action + (ev ? '-' + ev.id : ''), title: ev ? ev.title : action, event: true });
+    if (!/^[a-z0-9-]+$/i.test(text(CONFIG.UMAMI_WEBSITE_ID))) return;
+    trackQueue.push(action + (ev ? '-' + ev.id : ''));
     if (counterReady()) {
       flushTrackQueue();
       return;
