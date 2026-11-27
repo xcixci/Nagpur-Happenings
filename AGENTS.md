@@ -39,9 +39,10 @@ It lists events. It never sells tickets.
 `cities/nagpur.json` holds: `slug`, `name`, `name_local` (नागपूर), `domain`, `id_prefix`
 (Nagpur keeps NH because NH links are already shared; new cities get a 3-letter code,
 e.g. NSK for Nashik, so prefixes never clash),
-`whatsapp_number`, `whatsapp_channel_url`, `instagram_url`, `contact_email`, `feed_url`,
-`umami_website_id`, `timezone` (Asia/Kolkata), `theme` overrides, `footer` (credit and
-"Also by" links).
+`whatsapp_number`, `whatsapp_channel_url`, `instagram_url`, `contact_email`,
+`community_form_url` (directory sign-up form; empty hides the button), `feed_url`,
+`umami_website_id`, `timezone` (Asia/Kolkata), `theme` overrides, `footer` (the
+"Made by Arinjay" credit and its links only; no "Also by" box).
 
 ## Data
 Source of truth: the city's Google Sheet, served as JSON by its Apps Script feed.
@@ -81,12 +82,24 @@ Rules:
 
 ## Pages and URLs
 - `/` calendar: Today, This weekend, Next 7 days, month view, category filter.
+  "Today" uses the day layout and "Next 7 days" the week layout described below.
 - `/calendar/<yyyy>-<mm>/`: one page per month ("Events in Nagpur, December 2026").
   Month navigation goes back to the first month with events and forward to the last
   month with a listed event, at most 12 months ahead. Never hard-code an end date, and
-  never show empty future months.
-- Past months are the archive. They are public, linked from the footer ("Past events"),
-  not from the main menu.
+  never show empty future months. Every date in the month view links to its day page;
+  when a date has more events than fit, it shows "+N more", linking to that day.
+- `/calendar/<yyyy>-<mm>-<dd>/`: one page per day with at least one listed event
+  ("Events in Nagpur on Saturday, 28 November 2026"). Events in start-time order.
+  Events that start at the same time share one time heading with a count
+  ("6:30 PM · 3 events"), and every card shows its time range so overlaps are visible.
+  Previous/next arrows jump to the nearest day with events. The category filter works here.
+- `/calendar/week/<yyyy>-<mm>-<dd>/` (the date is that week's Monday): Monday to Sunday
+  as a list grouped by day, never a 7-column grid. Each day heading links to its day
+  page and shows the event count; a day with no events is one quiet line ("No events
+  listed"). Only weeks with at least one listed event get a page; previous/next arrows
+  skip empty weeks and follow the same range limits as months.
+- Past months, weeks and days are the archive. They are public, linked from the footer
+  ("Past events"), not from the main menu.
 - `/events/<slug>/`: one page per event. Past events keep their page, marked as ended.
 - `/e/<ID>/` stays the short share link and redirects to the event page. Links already
   shared on WhatsApp (e.g. `/e/NH-019/`) must keep working.
@@ -124,8 +137,10 @@ Rules:
 - Category icons: green line icons (Tabler Icons, MIT). No tiger stripes.
 - Keep everything v1 does: the milestone-shaped date badge, Add to calendar (Google + .ics), WhatsApp and native share,
   "Who can join" tags, the quiet look for memorials, vigils and protests, sticky
-  "Submit an event" and WhatsApp channel buttons, the floating WhatsApp bubble, the
-  footer credit and "Also by" box.
+  "Submit an event" and WhatsApp channel buttons, the floating WhatsApp bubble, and the
+  "Made by Arinjay" footer credit. Drop v1's "Also by" box (Orange Hunter, ABS, xci.cx).
+- Anyone can submit an event through the WhatsApp button, including new or solo
+  organisers who aren't in the directory. Their events show the organiser's plain name.
 - PWA: web manifest and home-screen icons only. No push notifications.
 
 ## SEO and sharing
