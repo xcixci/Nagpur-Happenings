@@ -40,7 +40,7 @@ It lists events. It never sells tickets.
 (Nagpur keeps NH because NH links are already shared; new cities get a 3-letter code,
 e.g. NSK for Nashik, so prefixes never clash),
 `whatsapp_number`, `whatsapp_channel_url`, `instagram_url`, `contact_email`,
-`community_form_url` (directory sign-up form; empty hides the button), `feed_url`,
+`organiser_form_url` (directory sign-up form; empty hides the button), `feed_url`,
 `umami_website_id`, `timezone` (Asia/Kolkata), `theme` overrides, `footer` (the
 "Made by Arinjay" credit and its links only; no "Also by" box).
 
@@ -58,12 +58,16 @@ but are never shown that way. See Design for how they are shown.
 
 events: `id` (NH-025, never changes) · `slug` · `city` · `title` · `category` ·
 `sub_category` · `date` · `start_time` · `end_time` ·
-`venue_id` · `area` · `community_id` · `description` · `registration_url` ·
+`venue_id` · `area` · `organiser_id` · `description` · `registration_url` ·
 `price_type` (free | paid) · `ticket_price` (INR) · `cover_image_url` ·
 `who_can_join` [] · `vibe_tags` [] · `status` (published | draft | cancelled) · `featured`
 
-communities: `id` (C-001) · `slug` · `name` · `category` · `sub_category` · `description` ·
-`logo_url` · `instagram_url` · `website_url` · `contact` · `founded` · `status` (listed | hidden)
+organisers: `id` (ORG-001) · `slug` · `name` · `type` (community | ngo | club | organisation) ·
+`category` · `sub_category` · `description` · `logo_url` · `instagram_url` · `website_url` ·
+`contact` · `founded` · `status` (listed | hidden)
+
+The directory is called "Organisers" everywhere (pages, data, Sheet tab). Each profile
+shows its `type` under the name.
 
 venues: `id` (V-001) · `slug` · `name` · `area` · `address` · `maps_url` · `website_url` ·
 `instagram_url`
@@ -75,9 +79,9 @@ Rules:
 - The build makes slugs. Nobody types them. Event slug = title + date + ID:
   `book-club-evening-28-nov-2026-nh025`. The ID at the end is what keeps old links
   working when an event is renamed or postponed.
-- Only `published` events and `listed` communities appear anywhere: pages, feeds, sitemap.
+- Only `published` events and `listed` organisers appear anywhere: pages, feeds, sitemap.
 - Events are alcohol-free unless `vibe_tags` contains "Alcohol served".
-- If an event's community or venue isn't in its tab yet, show the plain name without a
+- If an event's organiser or venue isn't in its tab yet, show the plain name without a
   link. Never fail the build over it.
 
 ## Pages and URLs
@@ -103,7 +107,7 @@ Rules:
 - `/events/<slug>/`: one page per event. Past events keep their page, marked as ended.
 - `/e/<ID>/` stays the short share link and redirects to the event page. Links already
   shared on WhatsApp (e.g. `/e/NH-019/`) must keep working.
-- `/communities/` and `/communities/<slug>/` (upcoming and past events). Each community
+- `/organisers/` and `/organisers/<slug>/` (upcoming and past events). Each organiser
   page has a "Notify me" button. It is a demand test, not real notifications: a tap
   records `notify_interest` in Umami and shows "Coming soon. Meanwhile, follow our
   WhatsApp channel" with the channel link.
@@ -111,22 +115,22 @@ Rules:
 - `/this-weekend/`, rebuilt automatically with every build.
 - `/blog/` and `/blog/<slug>/` from Markdown in `src/content/blog/`. A post with a future
   `date` stays hidden until that date.
-- `/api/events.json`, `/api/communities.json`, `/api/venues.json`: public upcoming data
+- `/api/events.json`, `/api/organisers.json`, `/api/venues.json`: public upcoming data
   for the PWA and a future app.
 
 ## Design
 - The new brand lives on the unmerged `brand-refresh` branch; v1 keeps the old look until
   v2 launches. Take colours, fonts, icons, favicon, the link-preview card and the date
   badge from there (`git show origin/brand-refresh:<path>`). Never merge that branch.
-- Brand source files live in brand/: the vector logo (full, icon, one-line; green and
-  cream), the jaali and tiles patterns, and the category icons. Use these for the
-  header, favicon, PWA icons and preview cards. Never use the retired orange
-  NH Logo.png or NH icon.png.
+- Brand source files live in `brand/`: the vector logo (full, icon, one-line; green and
+  cream), the jaali and tiles patterns, and the category icons. Use these for the header,
+  favicon, PWA icons and preview cards. Never use the retired orange `NH Logo.png` or
+  `NH icon.png`.
 - Patterns: jaali only as a quiet background (about 6% on cream, 8% on green), never
   behind event lists; tiles only as corner accents, never behind text.
 - Mobile-first. Check every change at 390px wide, then at 1280px.
 - Cards: one fixed 1:1 media frame. Show the whole poster (`object-contain`) on brand
-  green. Never crop a poster. No poster → community logo → category tile.
+  green. Never crop a poster. No poster → organiser logo → category tile.
 - Card titles and descriptions: `line-clamp-2`.
 - Dates: "Sat, 28 Nov" on cards (add the year only if it isn't the current year);
   "Saturday, 28 November 2026" on event pages. Never `2026-11-28` or `28/11/2026`.
@@ -151,7 +155,7 @@ Rules:
 
 ## SEO and sharing
 - JSON-LD: `Event` on event pages (`location` as Place, `organizer` as Organization,
-  `offers` in INR, `isAccessibleForFree`, `eventStatus`); `Organization` on community
+  `offers` in INR, `isAccessibleForFree`, `eventStatus`); `Organization` on organiser
   pages; `Place` on venue pages; `BreadcrumbList` on all inner pages.
 - OpenGraph and Twitter tags on every page. Each event gets a 1200×630 preview card;
   memorials and protests get the quiet design.
@@ -163,7 +167,7 @@ Rules:
 
 ## Analytics (Umami)
 Custom events: `register_click`, `share_click`, `whatsapp_click`, `calendar_add`, each
-with `event_id` or `community_id`; `notify_interest` with `community_id`; `sponsor_click`
+with `event_id` or `organiser_id`; `notify_interest` with `organiser_id`; `sponsor_click`
 with `sponsor_id`. Nothing personal.
 
 ## How to work
