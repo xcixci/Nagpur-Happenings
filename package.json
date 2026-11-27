@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "snapshot": "node --experimental-strip-types scripts/snapshot.ts",
+    "build": "npm run snapshot && astro build",
     "preview": "astro preview"
   },
   "dependencies": {

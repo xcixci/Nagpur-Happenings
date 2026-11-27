@@ -17,7 +17,7 @@ export interface City {
   whatsapp_channel_url: string;
   instagram_url: string;
   contact_email: string;
-  community_form_url: string;
+  organiser_form_url: string;
   feed_url: string;
   umami_website_id: string;
   timezone: string;
@@ -37,7 +37,7 @@ const required: (keyof City)[] = [
   'whatsapp_channel_url',
   'instagram_url',
   'contact_email',
-  'community_form_url',
+  'organiser_form_url',
   'feed_url',
   'umami_website_id',
   'timezone',

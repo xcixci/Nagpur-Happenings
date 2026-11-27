@@ -51,23 +51,39 @@ snapshot. Never publish an empty calendar.
 
 Sheet headers stay human-readable ("Start Time"). The mapping to field names lives in one
 file, `src/lib/sheet-map.ts`. All JSON fields are snake_case, so they can move to Supabase
-later without renaming. Categories and sub-categories live in `src/data/categories.json`.
+later without renaming. Categories, sub-categories and tags come from the Sheet's Lists
+tab (A Category on every row, B Sub-category, D Tag, E Tag group), served by the feed.
+There is no separate `categories.json`; the directory form reads the same tab.
 
 Dates and times are stored as `YYYY-MM-DD` and 24-hour `HH:MM` (for sorting and schema),
 but are never shown that way. See Design for how they are shown.
 
 events: `id` (NH-025, never changes) · `slug` · `city` · `title` · `category` ·
 `sub_category` · `date` · `start_time` · `end_time` ·
-`venue_id` · `area` · `organiser_id` · `description` · `registration_url` ·
+`venue_id` · `area` · `organiser_id` · `organiser_name` · `organiser_contact` ·
+`description` · `registration_url` ·
 `price_type` (free | paid) · `ticket_price` (INR) · `cover_image_url` ·
 `who_can_join` [] · `vibe_tags` [] · `status` (published | draft | cancelled) · `featured`
 
-organisers: `id` (ORG-001) · `slug` · `name` · `type` (community | ngo | club | organisation) ·
-`category` · `sub_category` · `description` · `logo_url` · `instagram_url` · `website_url` ·
-`contact` · `founded` · `status` (listed | hidden)
+organisers (public): `id` (ORG-001) · `slug` · `name` ·
+`type` (community | chapter | ngo | organisation) · `category` · `sub_category` · `tagline`
+(max 100 characters, shown on cards) · `description` (about 100 words) · `logo_url` ·
+`instagram_url` · `whatsapp_url` · `other_links` · `founded` (shown as "Since 2022") ·
+`languages` [] · `meeting_frequency` · `usual_time` · `area` · `turnout` · `price_type`
+(free | paid | mixed) · `typical_price` · `alcohol` (never | sometimes | usually) ·
+`how_to_join` · `tags` [] (max 5, from the Lists tab) · `founders` · `other_cities` ·
+`status` (listed | hidden) · `verified` (bool)
+
+organisers (private, never on pages, feeds or the API): `meetups_last_6_months` ·
+`contact_name` · `contact_whatsapp` · `contact_email` · `contact_role` · `backup_contact` ·
+`open_to` []. In the Sheet their headers end in "(private)", and the feed's allowlist
+never includes them.
 
 The directory is called "Organisers" everywhere (pages, data, Sheet tab). Each profile
-shows its `type` under the name.
+shows its `type` under the name. `alcohol` of sometimes or usually shows an "Alcohol
+served" label. `founders` shows only when filled in. No logo → category tile.
+Organisers sign up through the form; NH copies approved rows into the Organisers tab by
+hand. Nothing from the form publishes by itself.
 
 venues: `id` (V-001) · `slug` · `name` · `area` · `address` · `maps_url` · `website_url` ·
 `instagram_url`
@@ -76,8 +92,8 @@ sponsors: `id` (S-001) · `name` · `logo_url` · `link_url` · `placement` (sit
 `start_date` · `end_date` · `status` (live | off)
 
 Rules:
-- The build makes slugs. Nobody types them. Event slug = title + date + ID:
-  `book-club-evening-28-nov-2026-nh025`. The ID at the end is what keeps old links
+- The build makes slugs. Nobody types them. Event slug = title (first 6 words) + date +
+  ID: `book-club-evening-28-nov-2026-nh025`. The ID at the end is what keeps old links
   working when an event is renamed or postponed.
 - Only `published` events and `listed` organisers appear anywhere: pages, feeds, sitemap.
 - Events are alcohol-free unless `vibe_tags` contains "Alcohol served".
@@ -111,6 +127,8 @@ Rules:
   page has a "Notify me" button. It is a demand test, not real notifications: a tap
   records `notify_interest` in Umami and shows "Coming soon. Meanwhile, follow our
   WhatsApp channel" with the channel link.
+- `/register/` redirects to `organiser_form_url` (in v1 and v2), so shared sign-up links
+  keep working when the form changes.
 - `/venues/` and `/venues/<slug>/` (events held there).
 - `/this-weekend/`, rebuilt automatically with every build.
 - `/blog/` and `/blog/<slug>/` from Markdown in `src/content/blog/`. A post with a future
