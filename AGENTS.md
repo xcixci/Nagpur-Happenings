@@ -118,6 +118,12 @@ Rules:
 - The new brand lives on the unmerged `brand-refresh` branch; v1 keeps the old look until
   v2 launches. Take colours, fonts, icons, favicon, the link-preview card and the date
   badge from there (`git show origin/brand-refresh:<path>`). Never merge that branch.
+- Brand source files live in brand/: the vector logo (full, icon, one-line; green and
+  cream), the jaali and tiles patterns, and the category icons. Use these for the
+  header, favicon, PWA icons and preview cards. Never use the retired orange
+  NH Logo.png or NH icon.png.
+- Patterns: jaali only as a quiet background (about 6% on cream, 8% on green), never
+  behind event lists; tiles only as corner accents, never behind text.
 - Mobile-first. Check every change at 390px wide, then at 1280px.
 - Cards: one fixed 1:1 media frame. Show the whole poster (`object-contain`) on brand
   green. Never crop a poster. No poster → community logo → category tile.

@@ -1,0 +1,35 @@
+Type,Category,Name,File,Tabler icon
+Category,Books & Literature,Books & Literature,cat-books.svg,book-2
+Subcategory,Books & Literature,Book club,sub-books-book-club.svg,book
+Subcategory,Books & Literature,Poetry,sub-books-poetry.svg,feather
+Subcategory,Books & Literature,Writing,sub-books-writing.svg,pencil
+Category,Board Games & Chess,Board Games & Chess,cat-games.svg,dice-5
+Subcategory,Board Games & Chess,Board games,sub-games-board-games.svg,dice
+Subcategory,Board Games & Chess,Chess,sub-games-chess.svg,chess-knight
+Subcategory,Board Games & Chess,Quiz,sub-games-quiz.svg,brain
+Category,Arts & Culture,Arts & Culture,cat-arts.svg,palette
+Subcategory,Arts & Culture,Theatre,sub-arts-theatre.svg,masks-theater
+Subcategory,Arts & Culture,Painting & craft,sub-arts-painting-craft.svg,brush
+Subcategory,Arts & Culture,Photography,sub-arts-photography.svg,camera
+Category,Music & Entertainment,Music & Entertainment,cat-music.svg,music
+Subcategory,Music & Entertainment,Live music,sub-music-live-music.svg,piano
+Subcategory,Music & Entertainment,Open mic,sub-music-open-mic.svg,microphone-2
+Subcategory,Music & Entertainment,Comedy,sub-music-comedy.svg,mood-happy
+Subcategory,Music & Entertainment,Film screening,sub-music-film.svg,movie
+Category,Learning & Workshops,Learning & Workshops,cat-learning.svg,bulb
+Subcategory,Learning & Workshops,Workshop,sub-learning-workshop.svg,tool
+Subcategory,Learning & Workshops,Talk,sub-learning-talk.svg,presentation
+Subcategory,Learning & Workshops,Tech,sub-learning-tech.svg,code
+Category,Communities & Social,Communities & Social,cat-community.svg,users-group
+Subcategory,Communities & Social,Meetup,sub-community-meetup.svg,users
+Subcategory,Communities & Social,Volunteering,sub-community-volunteering.svg,heart-handshake
+Subcategory,Communities & Social,Support group,sub-community-support-group.svg,lifebuoy
+Category,Outdoors & Recreation,Outdoors & Recreation,cat-outdoors.svg,trees
+Subcategory,Outdoors & Recreation,Trek,sub-outdoors-trek.svg,mountain
+Subcategory,Outdoors & Recreation,Cycling,sub-outdoors-cycling.svg,bike
+Subcategory,Outdoors & Recreation,Run & fitness,sub-outdoors-run-fitness.svg,run
+Subcategory,Outdoors & Recreation,Sports,sub-outdoors-sports.svg,ball-football
+Category,Other,Other,cat-other.svg,sparkles
+Subcategory,Other,Food,sub-other-food.svg,tools-kitchen-2
+Subcategory,Other,Market & pop-up,sub-other-market.svg,building-store
+Subcategory,Other,Kids,sub-other-kids.svg,balloon
