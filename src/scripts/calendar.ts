@@ -321,11 +321,44 @@ function selected(root: HTMLElement): { cats: Set<string>; freeOnly: boolean } {
 }
 
 function paintFilters(root: HTMLElement, cats: Set<string>, freeOnly: boolean): void {
-  root.querySelector('[data-filter-all]')?.setAttribute('aria-pressed', cats.size === 0 ? 'true' : 'false');
   root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]').forEach((button) => {
     button.setAttribute('aria-pressed', cats.has(button.dataset.filterCat || '') ? 'true' : 'false');
   });
   root.querySelector('[data-free-only]')?.setAttribute('aria-pressed', freeOnly ? 'true' : 'false');
+  const count = root.querySelector('[data-filter-count]');
+  if (count) count.textContent = cats.size > 0 ? ` (${cats.size})` : '';
+  renderChips(root, cats);
+}
+
+function renderChips(root: HTMLElement, cats: Set<string>): void {
+  const box = root.querySelector<HTMLElement>('[data-filter-chips]');
+  if (!box) return;
+  box.replaceChildren();
+  if (cats.size === 0) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  for (const name of cats) {
+    const chip = document.createElement('span');
+    chip.className = 'filter-chip';
+    const label = document.createElement('span');
+    label.textContent = name;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'filter-chip__x';
+    remove.dataset.filterClear = name;
+    remove.setAttribute('aria-label', `Remove ${name}`);
+    remove.textContent = '✕';
+    chip.append(label, remove);
+    box.append(chip);
+  }
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'filter-clear';
+  clear.dataset.filterClearAll = '';
+  clear.textContent = 'Clear all';
+  box.append(clear);
 }
 
 function matches(el: HTMLElement, cats: Set<string>, freeOnly: boolean): boolean {
@@ -336,6 +369,7 @@ function matches(el: HTMLElement, cats: Set<string>, freeOnly: boolean): boolean
 
 function applyFilters(root: HTMLElement): void {
   const { cats, freeOnly } = selected(root);
+  paintFilters(root, cats, freeOnly);
   const filtering = cats.size > 0 || freeOnly;
 
   root.querySelectorAll<HTMLElement>('[data-event]').forEach((el) => {
@@ -455,22 +489,14 @@ function readUrl(root: HTMLElement): void {
   });
   const freeOnly = params.get('free') === '1';
   root.querySelector('[data-free-only]')?.setAttribute('aria-pressed', freeOnly ? 'true' : 'false');
-  const any = buttons.some((button) => button.getAttribute('aria-pressed') === 'true');
-  root.querySelector('[data-filter-all]')?.setAttribute('aria-pressed', any ? 'false' : 'true');
 }
 
 function bindFilters(root: HTMLElement): void {
   const buttons = () => [...root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]')];
   const sync = () => {
-    const { cats, freeOnly } = selected(root);
-    paintFilters(root, cats, freeOnly);
     applyFilters(root);
     writeUrl(root);
   };
-  root.querySelector('[data-filter-all]')?.addEventListener('click', () => {
-    buttons().forEach((button) => button.setAttribute('aria-pressed', 'false'));
-    sync();
-  });
   buttons().forEach((button) => {
     button.addEventListener('click', () => {
       const pressed = button.getAttribute('aria-pressed') === 'true';
@@ -480,11 +506,52 @@ function bindFilters(root: HTMLElement): void {
       sync();
     });
   });
+  root.querySelector('[data-filter-chips]')?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('[data-filter-clear-all]')) {
+      buttons().forEach((button) => button.setAttribute('aria-pressed', 'false'));
+      sync();
+      return;
+    }
+    const remove = target.closest<HTMLButtonElement>('[data-filter-clear]');
+    if (!remove) return;
+    const name = remove.dataset.filterClear || '';
+    const match = buttons().find((button) => button.dataset.filterCat === name);
+    match?.setAttribute('aria-pressed', 'false');
+    sync();
+  });
   root.querySelector('[data-free-only]')?.addEventListener('click', () => {
     const button = root.querySelector('[data-free-only]');
     const pressed = button?.getAttribute('aria-pressed') === 'true';
     button?.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     sync();
+  });
+  bindPanel(root);
+}
+
+function bindPanel(root: HTMLElement): void {
+  const panel = root.querySelector<HTMLElement>('[data-filter-panel]');
+  const openBtn = root.querySelector<HTMLButtonElement>('[data-filters-open]');
+  const sheet = panel?.querySelector<HTMLElement>('.filter-panel__sheet');
+  if (!panel || !openBtn) return;
+  const phone = window.matchMedia('(max-width: 639px)');
+  const setOpen = (open: boolean) => {
+    panel.hidden = !open;
+    openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('filter-sheet-open', open && phone.matches);
+    if (open) sheet?.focus({ preventScroll: true });
+    else openBtn.focus();
+  };
+  openBtn.addEventListener('click', () => setOpen(panel.hidden));
+  panel.querySelectorAll('[data-filters-close]').forEach((button) => {
+    button.addEventListener('click', () => setOpen(false));
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !panel.hidden) setOpen(false);
+  });
+  phone.addEventListener('change', () => {
+    document.body.classList.toggle('filter-sheet-open', !panel.hidden && phone.matches);
   });
 }
 

@@ -75,18 +75,18 @@ const cardProps = { organisers, cityName: city.name, domain: city.domain, timeZo
     <MonthNav prev={link(prev)} next={link(next)} />
   </div>
 
-  <div class="quick" role="radiogroup" aria-label="Calendar view">
-    <input class="sr-only" type="radio" name="cal-view" id="cal-view-today" />
-    <label class="quick__btn" for="cal-view-today">Today</label>
-    <input class="sr-only" type="radio" name="cal-view" id="cal-view-weekend" />
-    <label class="quick__btn" for="cal-view-weekend">This weekend</label>
-    <input class="sr-only" type="radio" name="cal-view" id="cal-view-week" />
-    <label class="quick__btn" for="cal-view-week">Next 7 days</label>
-    <input class="sr-only" type="radio" name="cal-view" id="cal-view-month" checked />
-    <label class="quick__btn" for="cal-view-month">Month</label>
-  </div>
-
-  <FilterBar categories={names} />
+  <FilterBar categories={names}>
+    <div class="quick" slot="views" role="radiogroup" aria-label="Calendar view">
+      <input class="sr-only" type="radio" name="cal-view" id="cal-view-today" />
+      <label class="quick__btn" for="cal-view-today">Today</label>
+      <input class="sr-only" type="radio" name="cal-view" id="cal-view-weekend" />
+      <label class="quick__btn" for="cal-view-weekend">Weekend</label>
+      <input class="sr-only" type="radio" name="cal-view" id="cal-view-week" />
+      <label class="quick__btn" for="cal-view-week">7 days</label>
+      <input class="sr-only" type="radio" name="cal-view" id="cal-view-month" checked />
+      <label class="quick__btn" for="cal-view-month">Month</label>
+    </div>
+  </FilterBar>
 
   <div class="cal-view cal-view-today" data-view data-view-today data-empty-scope="for today">
     <p class="view-range" data-range>{rangeLabel(today, today)}</p>

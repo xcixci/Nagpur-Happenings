@@ -14,6 +14,7 @@ interface Props {
   priceKind?: 'free' | 'paid' | '';
   size?: 'page' | 'card';
   frameClass?: string;
+  icon?: string;
 }
 
 const {
@@ -31,6 +32,7 @@ const {
   priceKind = '',
   size = 'page',
   frameClass = '',
+  icon = '',
 } = Astro.props;
 ---
 
@@ -42,10 +44,12 @@ const {
   data-quiet={quiet ? '' : undefined}
   data-logo={logo || undefined}
   data-logo-alt={logoAlt || undefined}
+  data-icon={icon ? '' : undefined}
 >
   {src && (
     <img class="frame__img" src={src} alt={alt} data-poster referrerpolicy="no-referrer" />
   )}
+  {icon && <span class="frame__icon" set:html={icon} aria-hidden="true" />}
   <p class="frame__tile" aria-hidden="true">{tile}</p>
   <p class="date-badge" aria-hidden="true">
     <span class="date-badge__wd">{weekday}</span>
@@ -88,7 +92,22 @@ const {
     line-height: 1.15;
     color: #f9edd2;
   }
+  .frame__icon {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    color: #f9edd2;
+  }
+  .frame__icon :global(svg) {
+    width: min(42%, 7.5rem);
+    height: min(42%, 7.5rem);
+  }
+  .frame[data-mode="tile"][data-icon] .frame__icon { display: flex; }
+  .frame[data-mode="tile"][data-icon] .frame__tile { display: none; }
   .frame[data-mode="tile"] .frame__tile { display: flex; }
+  .frame[data-quiet] .frame__icon { color: #cfc6bb; }
   .frame[data-quiet] .frame__tile { color: #cfc6bb; }
   .date-badge {
     position: absolute;
@@ -138,6 +157,27 @@ const {
   }
   .price-badge--free { background: #ddf0d6; color: #1f5a2a; }
   .price-badge--paid { background: #fff; color: #0e451c; box-shadow: inset 0 0 0 1px #d6bf8e; }
+
+  @media (max-width: 639px) {
+    .frame[data-size="page"] .date-badge {
+      top: 0.65rem;
+      left: 0.65rem;
+      width: 2.7rem;
+      border-radius: 1.35rem 1.35rem 7px 7px;
+    }
+    .frame[data-size="page"] .date-badge__wd {
+      padding: 0.46rem 0 0.12rem;
+      font-size: 0.5625rem;
+    }
+    .frame[data-size="page"] .date-badge__d {
+      padding-top: 0.22rem;
+      font-size: 1.3125rem;
+    }
+    .frame[data-size="page"] .date-badge__m {
+      padding: 0.08rem 0 0.3rem;
+      font-size: 0.5625rem;
+    }
+  }
 
   .frame[data-size="card"] .frame__tile {
     padding: 2.2rem 0.45rem 0.45rem;

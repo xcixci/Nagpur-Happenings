@@ -1,4 +1,6 @@
 ---
+import { categoryIcon } from '../lib/category-icons';
+
 interface Props {
   categories: string[];
 }
@@ -6,15 +8,44 @@ interface Props {
 const { categories } = Astro.props;
 ---
 
-<div class="filter-row">
-  <div class="filters" role="group" aria-label="Filter events by category">
-    <button type="button" class="pill" data-filter-all aria-pressed="true">All events</button>
-    {categories.map((category) => (
-      <button type="button" class="pill" data-filter-cat={category} aria-pressed="false">{category}</button>
-    ))}
+<div class="cal-controls">
+  <slot name="views" />
+  <div class="cal-controls__row">
+    <button
+      type="button"
+      class="pill"
+      data-filters-open
+      aria-expanded="false"
+      aria-controls="filter-panel"
+    >
+      Filters<span data-filter-count></span>
+    </button>
+    <button type="button" class="pill pill--free" data-free-only aria-pressed="false">Free entry</button>
+    <div id="filter-panel" class="filter-panel" data-filter-panel hidden>
+      <button type="button" class="filter-panel__backdrop" data-filters-close tabindex="-1" aria-label="Close filters"></button>
+      <div class="filter-panel__sheet" role="dialog" aria-modal="true" aria-label="Filters" tabindex="-1">
+        <div class="filter-panel__bar">
+          <p class="filter-panel__title">Filters</p>
+          <button type="button" class="filter-panel__close" data-filters-close aria-label="Close filters">✕</button>
+        </div>
+        <div data-filter-group="category">
+          <p class="filter-group__label" id="filter-categories">Categories</p>
+          <div role="group" aria-labelledby="filter-categories">
+            {categories.map((category) => (
+              <button type="button" class="filter-option" data-filter-cat={category} aria-pressed="false">
+                {categoryIcon(category) && (
+                  <span class="filter-option__icon" set:html={categoryIcon(category)} aria-hidden="true" />
+                )}
+                <span>{category}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <button type="button" class="pill pill--free" data-free-only aria-pressed="false">Free only</button>
+  <div class="filter-chips" data-filter-chips hidden></div>
 </div>
 <noscript>
-  <p class="filter-note">The category filter and Free only switch need JavaScript. Every event is listed.</p>
+  <p class="filter-note">Filters need JavaScript. Every event is listed.</p>
 </noscript>

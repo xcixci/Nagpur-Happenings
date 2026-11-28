@@ -106,8 +106,8 @@ Rules:
   link. Never fail the build over it.
 
 ## Pages and URLs
-- `/` calendar: Today, This weekend, Next 7 days, month view, category filter.
-  "Today" uses the day layout and "Next 7 days" the week layout described below.
+- `/` calendar: Today, Weekend, 7 days, month view, and the filters in Design.
+  "Today" uses the day layout and "7 days" the week layout described below.
 - `/calendar/<yyyy>-<mm>/`: one page per month ("Events in Nagpur, December 2026").
   Month navigation goes back to the first month with events and forward to the last
   month with a listed event, at most 12 months ahead. Never hard-code an end date, and
@@ -156,8 +156,22 @@ Rules:
   behind event lists; tiles only as corner accents, never behind text.
 - Mobile-first. Check every change at 390px wide, then at 1280px.
 - Cards: one fixed 1:1 media frame. Show the whole poster (`object-contain`) on brand
-  green. Never crop a poster. No poster → organiser logo → category tile.
+  green. Never crop a poster. No poster → organiser logo → category tile. The category
+  tile uses that category's icon, cream on green. Below 640px a list card is a compact
+  row: an 88px thumbnail with no date badge or price tag, and beside it the title
+  (2 lines), time range, place, organiser, and the price or "Free entry". Wider screens
+  keep the larger frame, with the date badge and price tag on the picture. On event
+  pages below 640px the date badge is about 25% smaller.
 - Card titles and descriptions: `line-clamp-2`.
+- Filters: a "Filters" button, with a count when categories are selected ("Filters (2)"),
+  and a "Free entry" switch that fills green when on. Under 640px the view switch
+  (Today, Weekend, 7 days, Month) is one full-width segmented control, with Filters and
+  Free entry on the next row. From 640px they share one row. Filters opens a bottom
+  sheet on phones and a dropdown from 640px up. The panel holds categories, each with
+  its icon, in one group so tags can be added later as a second group. A selected
+  category, in the panel and as a chip under the row, is filled green with cream
+  text, the same as Free entry when it is on. Each chip has ✕, and there is a
+  "Clear all". With JavaScript off, every event stays listed.
 - Dates: "Sat, 28 Nov" on cards (add the year only if it isn't the current year);
   "Saturday, 28 November 2026" on event pages. Never `2026-11-28` or `28/11/2026`.
 - Times: 12-hour with AM/PM, "6:30 PM", ranges "6:30 – 8:00 PM". Never 24-hour.
@@ -166,11 +180,14 @@ Rules:
   labelled "Sponsor", links use `rel="sponsored noopener"`, never styled like an event.
   No live sponsor: the slot disappears, and the footer keeps a small "Sponsor
   <city> Happenings" link to WhatsApp.
-- Colours: green #0E451C, cream #F9EDD2. Orange only as the small city dot, never as a
-  background or text colour. All text meets WCAG AA contrast.
+- Colours: green #0E451C, cream #F9EDD2. Weekend cells use the deeper cream. Orange
+  #F16E03 is allowed only for the city dot in the logo and the small dot on the
+  top-right edge of today's date circle in the month grid. Never for text or
+  backgrounds. All text meets WCAG AA contrast.
 - Fonts, self-hosted: Eczar (semibold) for headings, Mukta for body text. Marathi and
   Hindi must render. Light theme only (`color-scheme: only light`).
-- Category icons: green line icons (Tabler Icons, MIT). No tiger stripes.
+- Category icons: green line icons (Tabler Icons, MIT), cream when they sit on the
+  green category tile. No tiger stripes.
 - Keep everything v1 does: the milestone-shaped date badge, Add to calendar (Google + .ics), WhatsApp and native share,
   "Who can join" tags, the quiet look for memorials, vigils and protests, sticky
   "Submit an event" and WhatsApp channel buttons, the floating WhatsApp bubble, and the
@@ -202,3 +219,8 @@ with `sponsor_id`. Nothing personal.
 - No new dependency without saying why.
 - Before saying "done": the build passes, pages are checked at 390px and 1280px,
   JSON-LD validates, and there are no console errors.
+
+## Later, not now
+- Sub-category filter, once a category has 10 or more upcoming events.
+- Tag filter.
+- "Most viewed", from Umami, after launch, once there is real traffic.

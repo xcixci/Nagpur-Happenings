@@ -1,5 +1,6 @@
 ---
 import EventMedia from './EventMedia.astro';
+import { categoryIcon } from '../lib/category-icons';
 import type { EventPageModel } from '../lib/format';
 
 interface Props {
@@ -34,6 +35,7 @@ const solid =
     price={model.entry ? priceBadge : ''}
     priceKind={model.event.price_type === 'free' ? 'free' : model.event.price_type === 'paid' ? 'paid' : ''}
     frameClass="lg:rounded-lg"
+    icon={model.quiet ? '' : categoryIcon(model.event.category)}
   />
 
   <div class="min-w-0 px-4 py-6 lg:px-0 lg:py-0">
