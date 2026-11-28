@@ -1,7 +1,7 @@
 ---
 import EventMedia from './EventMedia.astro';
 import { categoryIcon } from '../lib/category-icons';
-import { cardModel, dateBadge, hasEnded, imageUrl, isQuiet, shortDate, timeRange } from '../lib/format';
+import { cardModel, hasEnded, imageUrl, isQuiet, shortDate, timeRange } from '../lib/format';
 import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
 
 interface Props {
@@ -10,11 +10,11 @@ interface Props {
   cityName: string;
   domain: string;
   timeZone: string;
+  showDate?: boolean;
 }
 
-const { event, organisers, cityName, domain, timeZone } = Astro.props;
+const { event, organisers, cityName, domain, timeZone, showDate = true } = Astro.props;
 const model = cardModel(event, organisers, cityName, domain, timeZone);
-const badge = dateBadge(event.date);
 const cancelled = event.status === 'cancelled';
 const quiet = isQuiet(event);
 const ended = hasEnded(event, timeZone);
@@ -46,11 +46,6 @@ const icon = quiet ? '' : categoryIcon(event.category);
     logoAlt={`${event.organiser_name || 'Organiser'} logo`}
     tile={model.tile}
     quiet={quiet}
-    weekday={badge.weekday}
-    day={badge.day}
-    month={badge.month}
-    price={model.badge}
-    priceKind={model.badgeKind}
     size="card"
     frameClass="rounded-lg"
     icon={icon}
@@ -63,10 +58,10 @@ const icon = quiet ? '' : categoryIcon(event.category);
     <p class:list={['event-card__title font-serif text-xl font-semibold leading-tight line-clamp-2', cancelled && 'text-moss line-through decoration-2']}>
       {event.title}
     </p>
-    {(dateLabel || timeLabel) && (
+    {((showDate && dateLabel) || timeLabel) && (
       <p class="event-card__when mt-1 text-sm">
-        {dateLabel && <span class="event-card__date">{dateLabel}</span>}
-        {dateLabel && timeLabel && <span class="event-card__sep"> · </span>}
+        {showDate && dateLabel && <span class="event-card__date">{dateLabel}</span>}
+        {showDate && dateLabel && timeLabel && <span class="event-card__sep"> · </span>}
         {timeLabel && <span class="event-card__time">{timeLabel}</span>}
       </p>
     )}
@@ -97,7 +92,6 @@ const icon = quiet ? '' : categoryIcon(event.category);
     outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
-  .event-card__meta { display: none; }
   @media (max-width: 639px) {
     .event-card {
       grid-template-columns: 5.5rem minmax(0, 1fr);
@@ -108,12 +102,9 @@ const icon = quiet ? '' : categoryIcon(event.category);
     .event-card__featured,
     .event-card__date,
     .event-card__sep,
-    .event-card__desc,
-    .event-card :global(.date-badge),
-    .event-card :global(.price-badge) {
+    .event-card__desc {
       display: none;
     }
-    .event-card__meta { display: block; }
     .event-card__title { font-size: 1.05rem; }
   }
 </style>

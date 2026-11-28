@@ -4,6 +4,7 @@ import {
   MAX_CHIPS,
   MAX_DOTS,
   countLabel,
+  dayPath,
   monthAgenda,
   monthGrid,
   monthKey,
@@ -72,19 +73,31 @@ const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
             data-date={cell.date}
             aria-current={isToday ? 'date' : undefined}
           >
+            {cell.events.length > 0 ? (
+              <a class="day__link" href={dayPath(cell.date)}>
+                <span class="sr-only">
+                  {weekdays[cell.weekday]} {cell.day} {name}
+                  <span data-today-flag hidden={!isToday}>, today</span>
+                  {cell.names.length > 0 && `, ${cell.names.join(', ')}`}
+                  {', '}
+                  <span data-day-count>{countLabel(cell.events.length)}</span>
+                </span>
+              </a>
+            ) : (
+              <p class="sr-only">
+                {weekdays[cell.weekday]} {cell.day} {name}
+                <span data-today-flag hidden={!isToday}>, today</span>
+                {cell.names.length > 0 && `, ${cell.names.join(', ')}`}
+                {', '}
+                <span data-day-count>{countLabel(cell.events.length)}</span>
+              </p>
+            )}
             <div class="day__head">
               <span class="day__num" aria-hidden="true">{cell.day}</span>
               {cell.names.length > 0 && (
                 <span class="day__label" aria-hidden="true" title={cell.names.join(', ')}>{cell.names.join(', ')}</span>
               )}
             </div>
-            <p class="sr-only">
-              {weekdays[cell.weekday]} {cell.day} {name}
-              <span data-today-flag hidden={!isToday}>, today</span>
-              {cell.names.length > 0 && `, ${cell.names.join(', ')}`}
-              {', '}
-              <span data-day-count>{countLabel(cell.events.length)}</span>
-            </p>
             {cell.events.length > 0 && (
               <ul class="day__events">
                 {cell.events.map((event, index) => (
@@ -107,7 +120,7 @@ const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
                 ))}
               </ul>
             )}
-            <p class="day__more" data-more hidden={extra <= 0}>+{Math.max(extra, 0)} more</p>
+            <p class="day__more" data-more hidden={extra <= 0} aria-hidden="true">+{Math.max(extra, 0)} more</p>
             {cell.events.length > 0 && (
               <span class="day__dots" aria-hidden="true">
                 {cell.events.map((event, index) => (

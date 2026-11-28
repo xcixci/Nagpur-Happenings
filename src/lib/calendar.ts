@@ -11,7 +11,7 @@ const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export const MAX_CHIPS = 3;
-export const MAX_DOTS = 4;
+export const MAX_DOTS = 3;
 
 export interface YearMonth {
   year: number;
@@ -111,20 +111,57 @@ function compareYm(a: YearMonth, b: YearMonth): number {
   return a.year * 12 + a.month - (b.year * 12 + b.month);
 }
 
+function lastVisibleMonth(todayIso: string): YearMonth | null {
+  const today = parseIso(todayIso);
+  if (!today) return null;
+  return addMonths({ year: today.year, month: today.month }, 12);
+}
+
+function inWindow(iso: string, lastAllowed: YearMonth): boolean {
+  const date = parseIso(iso);
+  if (!date) return false;
+  return compareYm({ year: date.year, month: date.month }, lastAllowed) <= 0;
+}
+
 /** Months that have a listed event, from the earliest through 12 months ahead of today. */
 export function visibleMonths(events: EventRecord[], todayIso: string): YearMonth[] {
-  const today = parseIso(todayIso);
-  if (!today) return [];
-  const lastAllowed = addMonths({ year: today.year, month: today.month }, 12);
+  const lastAllowed = lastVisibleMonth(todayIso);
+  if (!lastAllowed) return [];
   const keys = new Set<string>();
   for (const event of calendarEvents(events)) {
+    if (!inWindow(event.date, lastAllowed)) continue;
     const date = parseIso(event.date);
     if (!date) continue;
-    const ym = { year: date.year, month: date.month };
-    if (compareYm(ym, lastAllowed) > 0) continue;
     keys.add(monthKey(date.year, date.month));
   }
   return [...keys].sort().map((key) => parseMonthKey(key)).filter((ym): ym is YearMonth => !!ym);
+}
+
+/** Days that have a listed event, inside the same window as the month pages. */
+export function visibleDays(events: EventRecord[], todayIso: string): string[] {
+  const lastAllowed = lastVisibleMonth(todayIso);
+  if (!lastAllowed) return [];
+  const dates = new Set<string>();
+  for (const event of calendarEvents(events)) {
+    if (!inWindow(event.date, lastAllowed)) continue;
+    dates.add(event.date);
+  }
+  return [...dates].sort();
+}
+
+/** Monday of the week that contains `iso`. Weeks start on Monday. */
+export function mondayOf(iso: string): string {
+  const date = parseIso(iso);
+  if (!date) return iso;
+  const back = date.weekday === 0 ? 6 : date.weekday - 1;
+  return addDays(iso, -back);
+}
+
+/** Mondays of weeks that contain a listed event, inside the same window as the month pages. */
+export function visibleWeeks(events: EventRecord[], todayIso: string): string[] {
+  const mondays = new Set<string>();
+  for (const iso of visibleDays(events, todayIso)) mondays.add(mondayOf(iso));
+  return [...mondays].sort();
 }
 
 export function neighbor(months: YearMonth[], current: YearMonth, delta: -1 | 1): YearMonth | null {
@@ -136,6 +173,43 @@ export function neighbor(months: YearMonth[], current: YearMonth, delta: -1 | 1)
 
 export function monthPath(ym: YearMonth): string {
   return `/calendar/${monthKey(ym.year, ym.month)}/`;
+}
+
+export function dayPath(iso: string): string {
+  return `/calendar/${iso}/`;
+}
+
+export function weekPath(monday: string): string {
+  return `/calendar/week/${monday}/`;
+}
+
+/** "23–29 November 2026", or "30 November – 6 December 2026" when the week crosses a month. */
+export function weekRangeLabel(monday: string): string {
+  const end = addDays(monday, 6);
+  const start = parseIso(monday);
+  const finish = parseIso(end);
+  if (!start || !finish) return '';
+  const monthA = MONTHS[start.month - 1] ?? '';
+  const monthB = MONTHS[finish.month - 1] ?? '';
+  if (start.year === finish.year && start.month === finish.month) {
+    return `${start.day}–${finish.day} ${monthB} ${finish.year}`;
+  }
+  if (start.year === finish.year) return `${start.day} ${monthA} – ${finish.day} ${monthB} ${finish.year}`;
+  return `${start.day} ${monthA} ${start.year} – ${finish.day} ${monthB} ${finish.year}`;
+}
+
+/** Month pages a week can link to. A month with no page is left out. */
+export function weekMonths(monday: string, months: YearMonth[]): YearMonth[] {
+  const keys = [monday.slice(0, 7), addDays(monday, 6).slice(0, 7)];
+  const seen = new Set<string>();
+  const found: YearMonth[] = [];
+  for (const key of keys) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const ym = months.find((item) => monthKey(item.year, item.month) === key);
+    if (ym) found.push(ym);
+  }
+  return found;
 }
 
 export function monthName(ym: YearMonth): string {

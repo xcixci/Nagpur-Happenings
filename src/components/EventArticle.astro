@@ -1,4 +1,5 @@
 ---
+import DateBadge from './DateBadge.astro';
 import EventMedia from './EventMedia.astro';
 import { categoryIcon } from '../lib/category-icons';
 import type { EventPageModel } from '../lib/format';
@@ -9,11 +10,6 @@ interface Props {
 }
 
 const { model, cityName } = Astro.props;
-const priceBadge = model.event.price_type === 'free'
-  ? 'Free entry'
-  : model.event.ticket_price != null && model.entry.includes('₹')
-    ? model.entry.slice(model.entry.indexOf('₹'))
-    : 'Paid';
 const line =
   'inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-4 font-medium text-ink no-underline hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 const solid =
@@ -29,18 +25,13 @@ const solid =
     logoAlt={model.media.logoAlt}
     tile={model.media.tile}
     quiet={model.quiet}
-    weekday={model.badge.weekday}
-    day={model.badge.day}
-    month={model.badge.month}
-    price={model.entry ? priceBadge : ''}
-    priceKind={model.event.price_type === 'free' ? 'free' : model.event.price_type === 'paid' ? 'paid' : ''}
     frameClass="lg:rounded-lg"
     icon={model.quiet ? '' : categoryIcon(model.event.category)}
   />
 
   <div class="min-w-0 px-4 py-6 lg:px-0 lg:py-0">
     <p class="mb-3">
-      <a class="text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/">← All events</a>
+      <a class="text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href={model.dayPath}>← {model.dayBack}</a>
     </p>
     {model.categoryLine && <p class="text-sm font-semibold tracking-wide text-moss">{model.categoryLine}</p>}
     {(model.featured || model.alcohol || model.who.length > 0) && (
@@ -50,9 +41,14 @@ const solid =
         {model.who.map((tag) => <li class="rounded-full bg-paper-deep px-3 py-1 text-sm">{tag}</li>)}
       </ul>
     )}
-    <h1 class:list={['mt-3 font-serif text-3xl font-semibold leading-tight text-balance sm:text-4xl', model.cancelled && 'text-moss line-through decoration-2']}>
-      {model.event.title}
-    </h1>
+    <div class="event-heading">
+      {model.badge.day && (
+        <DateBadge weekday={model.badge.weekday} day={model.badge.day} month={model.badge.month} quiet={model.quiet} />
+      )}
+      <h1 class:list={['font-serif text-3xl font-semibold leading-tight text-balance sm:text-4xl', model.cancelled && 'text-moss line-through decoration-2']}>
+        {model.event.title}
+      </h1>
+    </div>
     {model.cancelled && <p class="mt-3 font-medium">This event has been cancelled.</p>}
     {model.ended && <p class="mt-3 text-moss">This event has ended.</p>}
     {model.lede && <p class="mt-4 whitespace-pre-line text-lg leading-relaxed">{model.lede}</p>}
@@ -155,6 +151,20 @@ const solid =
     </p>
   </div>
 </article>
+
+<style>
+  .event-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 0.75rem;
+  }
+  .event-heading h1 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+  }
+</style>
 
 <script>
   import { startEventPage } from '../scripts/event-page';

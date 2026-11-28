@@ -1,7 +1,9 @@
 import {
   datesFrom,
   dayLabel,
+  dayPath,
   emptyCopy,
+  MAX_DOTS,
   rangeLabel,
   startMonthKey,
   weekendRange,
@@ -138,7 +140,13 @@ function fillDays(
     heading.className = 'day-heading';
     heading.dataset.dayHeading = '';
     heading.dataset.label = label;
-    heading.textContent = list.length === 0 ? label : `${label} · ${list.length === 1 ? '1 event' : `${list.length} events`}`;
+    const text = list.length === 0 ? label : `${label} · ${list.length === 1 ? '1 event' : `${list.length} events`}`;
+    if (list.length > 0) {
+      const link = document.createElement('a');
+      link.href = dayPath(iso);
+      link.textContent = text;
+      heading.append(link);
+    } else heading.textContent = text;
     item.append(heading);
     const name = names.get(iso);
     if (name) {
@@ -231,15 +239,20 @@ function markDays(root: HTMLElement, today: string): void {
   });
 }
 
+function writeHeading(heading: HTMLElement, text: string): void {
+  const link = heading.querySelector('a');
+  if (link) link.textContent = text;
+  else heading.textContent = text;
+}
+
 function retitleAgenda(root: HTMLElement, today: string): void {
-  root.querySelectorAll<HTMLElement>('[data-agenda-day]').forEach((group) => {
+  root.querySelectorAll<HTMLElement>('[data-day-group]').forEach((group) => {
     const iso = group.dataset.date || '';
     const heading = group.querySelector<HTMLElement>('[data-day-heading]');
     if (!heading || !iso) return;
-    const total = group.querySelectorAll('[data-event]').length;
     const label = dayLabel(iso, today);
     heading.dataset.label = label;
-    heading.textContent = total === 0 ? label : `${label} · ${total === 1 ? '1 event' : `${total} events`}`;
+    if (group.hasAttribute('data-named-only')) writeHeading(heading, label);
   });
 }
 
@@ -400,8 +413,8 @@ function applyFilters(root: HTMLElement): void {
         dot.hidden = true;
         return;
       }
-      dot.hidden = dots >= 4;
-      if (dots < 4) dots += 1;
+      dot.hidden = dots >= MAX_DOTS;
+      if (dots < MAX_DOTS) dots += 1;
     });
     cell.classList.toggle('day--has-events', matched > 0);
     const count = cell.querySelector('[data-day-count]');
@@ -425,7 +438,7 @@ function applyFilters(root: HTMLElement): void {
     const heading = group.querySelector<HTMLElement>('[data-day-heading]');
     const label = heading?.dataset.label || '';
     if (heading) {
-      heading.textContent = visible > 0 ? `${label} · ${visible === 1 ? '1 event' : `${visible} events`}` : label;
+      writeHeading(heading, visible > 0 ? `${label} · ${visible === 1 ? '1 event' : `${visible} events`}` : label);
     }
     if (group.hasAttribute('data-week-day')) {
       group.hidden = false;

@@ -111,24 +111,32 @@ Rules:
 - `/calendar/<yyyy>-<mm>/`: one page per month ("Events in Nagpur, December 2026").
   Month navigation goes back to the first month with events and forward to the last
   month with a listed event, at most 12 months ahead. Never hard-code an end date, and
-  never show empty future months. Every date in the month view links to its day page;
-  when a date has more events than fit, it shows "+N more", linking to that day.
+  never show empty future months. Every date in the month view links to its day page.
+  A day with events shows its number in bold green; empty days use a lighter, muted
+  number. Today stays the filled green circle with the orange dot. Under 640px a day
+  shows up to 3 dots and the grid has no inner cell borders; weekend shading and the
+  outer edge stay. From 640px the cell shows event names and a green underlined
+  "+N more", and hovering a day with events gives the cell a subtle green border.
 - `/calendar/<yyyy>-<mm>-<dd>/`: one page per day with at least one listed event
   ("Events in Nagpur on Saturday, 28 November 2026"). Events in start-time order.
   Events that start at the same time share one time heading with a count
   ("6:30 PM · 3 events"), and every card shows its time range so overlaps are visible.
-  Previous/next arrows jump to the nearest day with events. The category filter works here.
+  Previous/next arrows jump to the nearest day with events. Filters and Free entry
+  work here. Under the title, small links go to that day's week page ("See the whole
+  week") and its month page ("All of November").
 - `/calendar/week/<yyyy>-<mm>-<dd>/` (the date is that week's Monday): Monday to Sunday
   as a list grouped by day, never a 7-column grid. Each day heading links to its day
   page and shows the event count; a day with no events is one quiet line ("No events
   listed"). Only weeks with at least one listed event get a page; previous/next arrows
-  skip empty weeks and follow the same range limits as months.
+  skip empty weeks and follow the same range limits as months. Filters and Free entry
+  work here. Under the title, a small link goes to the month page. A week that runs
+  into a second month links to each of those months that has a page.
 - Past months, weeks and days are the archive. They are public, linked from the footer
   ("Past events"), not from the main menu.
 - `/events/<slug>/`: one page per event. Past events keep their page, marked as ended.
-  A small "← All events" link above the category line goes to the home page. Never
-  `history.back()`: someone arriving from WhatsApp has no page to return to. After
-  Step 4b, this link points to the event's day page ("← Sunday, 29 November").
+  A small link above the category line goes to that event's day page
+  ("← Sunday, 29 November"). Never `history.back()`: someone arriving from WhatsApp
+  has no page to return to.
 - `/e/<ID>/` stays the short share link and redirects to the event page. Links already
   shared on WhatsApp (e.g. `/e/NH-019/`) must keep working.
 - `/organisers/` and `/organisers/<slug>/` (upcoming and past events). Each organiser
@@ -156,12 +164,14 @@ Rules:
   behind event lists; tiles only as corner accents, never behind text.
 - Mobile-first. Check every change at 390px wide, then at 1280px.
 - Cards: one fixed 1:1 media frame. Show the whole poster (`object-contain`) on brand
-  green. Never crop a poster. No poster → organiser logo → category tile. The category
-  tile uses that category's icon, cream on green. Below 640px a list card is a compact
-  row: an 88px thumbnail with no date badge or price tag, and beside it the title
-  (2 lines), time range, place, organiser, and the price or "Free entry". Wider screens
-  keep the larger frame, with the date badge and price tag on the picture. On event
-  pages below 640px the date badge is about 25% smaller.
+  green. Never crop a poster, and never lay anything on it: no date badge, no price
+  tag. No poster → organiser logo → category tile. The category tile uses that
+  category's icon, cream on green. A list card is a row. Below 640px the thumbnail is
+  88px, and beside it sit the title (2 lines), time range, place, organiser, and the
+  price or "Free entry". Wider screens keep the larger frame and the same text, and
+  add the short date. A day page leaves that date off, because the page is that day.
+  On an event page the milestone date badge sits to the left of the title, not on
+  the picture.
 - Card titles and descriptions: `line-clamp-2`.
 - Filters: a "Filters" button, with a count when categories are selected ("Filters (2)"),
   and a "Free entry" switch that fills green when on. Under 640px the view switch
@@ -172,8 +182,9 @@ Rules:
   category, in the panel and as a chip under the row, is filled green with cream
   text, the same as Free entry when it is on. Each chip has ✕, and there is a
   "Clear all". With JavaScript off, every event stays listed.
-- Dates: "Sat, 28 Nov" on cards (add the year only if it isn't the current year);
-  "Saturday, 28 November 2026" on event pages. Never `2026-11-28` or `28/11/2026`.
+- Dates: "Sat, 28 Nov" on cards (add the year only if it isn't the current year),
+  except on a day page, which shows only the time. "Saturday, 28 November 2026" on
+  event pages. Never `2026-11-28` or `28/11/2026`.
 - Times: 12-hour with AM/PM, "6:30 PM", ranges "6:30 – 8:00 PM". Never 24-hour.
 - Sponsors: at most one live sponsor per placement. `site` is a thin "Supported by" strip
   under the header on every page; `weekend` is one card on `/this-weekend/`. Always

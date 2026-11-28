@@ -105,6 +105,8 @@ export interface EventPageModel {
   };
   pagePath: string;
   pageUrl: string;
+  dayPath: string;
+  dayBack: string;
   shortPath: string;
   shortUrl: string;
   cardPath: string;
@@ -347,6 +349,8 @@ export function eventPageModel(input: {
     },
     pagePath,
     pageUrl,
+    dayPath: date ? `/calendar/${event.date}/` : '/',
+    dayBack: date ? `${WEEKDAYS[date.weekday]}, ${date.day} ${MONTHS[date.month - 1]}` : 'All events',
     shortPath,
     shortUrl,
     cardPath,

@@ -1,0 +1,51 @@
+---
+interface Props {
+  weekday: string;
+  day: string;
+  month: string;
+  quiet?: boolean;
+}
+
+const { weekday, day, month, quiet = false } = Astro.props;
+---
+
+<p class:list={['date-badge', quiet && 'is-quiet']} aria-hidden="true">
+  <span class="date-badge__wd">{weekday}</span>
+  <span class="date-badge__d">{day}</span>
+  <span class="date-badge__m">{month}</span>
+</p>
+
+<style>
+  .date-badge {
+    display: grid;
+    flex: none;
+    width: 3.6rem;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 1.8rem 1.8rem 9px 9px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(14, 69, 28, 0.2);
+  }
+  .date-badge__wd {
+    padding: 0.62rem 0 0.16rem;
+    background: #0e451c;
+    color: #f9edd2;
+    font: 700 0.75rem/1 var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .date-badge__d {
+    padding-top: 0.3rem;
+    font: 600 1.75rem/1 var(--font-serif);
+    color: #0e451c;
+  }
+  .date-badge__m {
+    padding: 0.1rem 0 0.4rem;
+    font: 500 0.75rem/1 var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #44604c;
+  }
+  .date-badge.is-quiet .date-badge__wd { background: #3a3633; color: #f2ebe1; }
+</style>

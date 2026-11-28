@@ -7,11 +7,6 @@ interface Props {
   logoAlt?: string;
   tile: string;
   quiet: boolean;
-  weekday: string;
-  day: string;
-  month: string;
-  price?: string;
-  priceKind?: 'free' | 'paid' | '';
   size?: 'page' | 'card';
   frameClass?: string;
   icon?: string;
@@ -25,11 +20,6 @@ const {
   logoAlt = '',
   tile,
   quiet,
-  weekday,
-  day,
-  month,
-  price = '',
-  priceKind = '',
   size = 'page',
   frameClass = '',
   icon = '',
@@ -51,16 +41,6 @@ const {
   )}
   {icon && <span class="frame__icon" set:html={icon} aria-hidden="true" />}
   <p class="frame__tile" aria-hidden="true">{tile}</p>
-  <p class="date-badge" aria-hidden="true">
-    <span class="date-badge__wd">{weekday}</span>
-    <span class="date-badge__d">{day}</span>
-    <span class="date-badge__m">{month}</span>
-  </p>
-  {price && (
-    <p class:list={['price-badge', priceKind === 'free' ? 'price-badge--free' : 'price-badge--paid']} aria-hidden="true">
-      {price}
-    </p>
-  )}
 </div>
 
 <style>
@@ -83,7 +63,7 @@ const {
     margin: 0;
     align-items: center;
     justify-content: center;
-    padding: 4.5rem 1.5rem 1.5rem;
+    padding: 1.5rem;
     text-align: center;
     text-wrap: balance;
     font-family: var(--font-serif);
@@ -109,102 +89,8 @@ const {
   .frame[data-mode="tile"] .frame__tile { display: flex; }
   .frame[data-quiet] .frame__icon { color: #cfc6bb; }
   .frame[data-quiet] .frame__tile { color: #cfc6bb; }
-  .date-badge {
-    position: absolute;
-    top: 0.85rem;
-    left: 0.85rem;
-    z-index: 1;
-    display: grid;
-    width: 3.6rem;
-    margin: 0;
-    overflow: hidden;
-    border-radius: 1.8rem 1.8rem 9px 9px;
-    background: #fff;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(14, 69, 28, 0.2);
-  }
-  .frame[data-mode="tile"] .date-badge { box-shadow: 0 0 0 2px #f9edd2; }
-  .date-badge__wd {
-    padding: 0.62rem 0 0.16rem;
-    background: #0e451c;
-    color: #f9edd2;
-    font: 700 0.75rem/1 var(--font-sans);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .date-badge__d {
-    padding-top: 0.3rem;
-    font: 600 1.75rem/1 var(--font-serif);
-    color: #0e451c;
-  }
-  .date-badge__m {
-    padding: 0.1rem 0 0.4rem;
-    font: 500 0.75rem/1 var(--font-sans);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #44604c;
-  }
-  .frame[data-quiet] .date-badge__wd { background: #3a3633; color: #f2ebe1; }
-  .price-badge {
-    position: absolute;
-    left: 0.85rem;
-    bottom: 0.85rem;
-    z-index: 1;
-    margin: 0;
-    padding: 0.4rem 0.75rem 0.34rem;
-    border-radius: 999px;
-    font: 700 0.8125rem/1 var(--font-sans);
-  }
-  .price-badge--free { background: #ddf0d6; color: #1f5a2a; }
-  .price-badge--paid { background: #fff; color: #0e451c; box-shadow: inset 0 0 0 1px #d6bf8e; }
-
-  @media (max-width: 639px) {
-    .frame[data-size="page"] .date-badge {
-      top: 0.65rem;
-      left: 0.65rem;
-      width: 2.7rem;
-      border-radius: 1.35rem 1.35rem 7px 7px;
-    }
-    .frame[data-size="page"] .date-badge__wd {
-      padding: 0.46rem 0 0.12rem;
-      font-size: 0.5625rem;
-    }
-    .frame[data-size="page"] .date-badge__d {
-      padding-top: 0.22rem;
-      font-size: 1.3125rem;
-    }
-    .frame[data-size="page"] .date-badge__m {
-      padding: 0.08rem 0 0.3rem;
-      font-size: 0.5625rem;
-    }
-  }
-
   .frame[data-size="card"] .frame__tile {
-    padding: 2.2rem 0.45rem 0.45rem;
+    padding: 0.45rem;
     font-size: 0.95rem;
-  }
-  .frame[data-size="card"] .date-badge {
-    top: 0.35rem;
-    left: 0.35rem;
-    width: 2.45rem;
-    border-radius: 1.225rem 1.225rem 6px 6px;
-  }
-  .frame[data-size="card"] .date-badge__wd {
-    padding: 0.32rem 0 0.08rem;
-    font-size: 0.625rem;
-  }
-  .frame[data-size="card"] .date-badge__d {
-    padding-top: 0.12rem;
-    font-size: 1.15rem;
-  }
-  .frame[data-size="card"] .date-badge__m {
-    padding-bottom: 0.22rem;
-    font-size: 0.625rem;
-  }
-  .frame[data-size="card"] .price-badge {
-    left: 0.35rem;
-    bottom: 0.35rem;
-    padding: 0.22rem 0.4rem 0.18rem;
-    font-size: 0.6875rem;
   }
 </style>

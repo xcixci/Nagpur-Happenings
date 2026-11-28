@@ -1,6 +1,6 @@
 ---
 import EventCard from './EventCard.astro';
-import { dayHeading, dayLabel } from '../lib/calendar';
+import { dayHeading, dayLabel, dayPath } from '../lib/calendar';
 import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
 
 interface Props {
@@ -28,7 +28,13 @@ const namedOnly = kind === 'agenda' && events.length === 0;
   data-week-day={kind === 'week' ? '' : undefined}
   data-named-only={namedOnly ? '' : undefined}
 >
-  <h2 class="day-heading" data-day-heading data-label={label}>{dayHeading(date, today, events.length)}</h2>
+  <h2 class="day-heading" data-day-heading data-label={label}>
+    {events.length > 0 ? (
+      <a href={dayPath(date)}>{dayHeading(date, today, events.length)}</a>
+    ) : (
+      dayHeading(date, today, events.length)
+    )}
+  </h2>
   {names.length > 0 && <p class="day-names">{names.join(', ')}</p>}
   {events.length > 0 && (
     <ul class="event-list" data-event-list>

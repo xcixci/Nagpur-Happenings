@@ -9,9 +9,10 @@ interface Props {
   cityName: string;
   domain: string;
   timeZone: string;
+  showDate?: boolean;
 }
 
-const { events, organisers, cityName, domain, timeZone } = Astro.props;
+const { events, organisers, cityName, domain, timeZone, showDate = true } = Astro.props;
 const groups = groupByStart(events);
 ---
 
@@ -21,7 +22,7 @@ const groups = groupByStart(events);
     <ul class="event-list">
       {group.events.map((event) => (
         <li>
-          <EventCard event={event} organisers={organisers} cityName={cityName} domain={domain} timeZone={timeZone} />
+          <EventCard event={event} organisers={organisers} cityName={cityName} domain={domain} timeZone={timeZone} showDate={showDate} />
         </li>
       ))}
     </ul>

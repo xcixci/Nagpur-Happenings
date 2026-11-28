@@ -1,0 +1,99 @@
+---
+import FilterBar from '../../components/FilterBar.astro';
+import MonthNav from '../../components/MonthNav.astro';
+import TimeGroups from '../../components/TimeGroups.astro';
+import Page from '../../layouts/Page.astro';
+import { city } from '../../lib/city';
+import {
+  calendarEvents,
+  dayPath,
+  eventsOn,
+  filterCategories,
+  mondayOf,
+  monthName,
+  monthPath,
+  visibleDays,
+  weekPath,
+  type YearMonth,
+} from '../../lib/calendar';
+import { cityToday, longDate, parseIso } from '../../lib/format';
+import { loadSnapshot } from '../../lib/snapshot';
+
+export function getStaticPaths() {
+  const snap = loadSnapshot();
+  const today = cityToday(city.timezone);
+  return visibleDays(snap.events, today).map((date) => {
+    const [year, month, day] = date.split('-');
+    if (!year || !month || !day) throw new Error(`Bad day ${date}`);
+    return { params: { year, month, day }, props: { date } };
+  });
+}
+
+interface Props {
+  date: string;
+}
+
+const { date } = Astro.props;
+const parsed = parseIso(date);
+if (!parsed) throw new Error(`Bad day ${date}`);
+const snap = loadSnapshot();
+const today = cityToday(city.timezone);
+const listed = calendarEvents(snap.events);
+const days = visibleDays(listed, today);
+const index = days.indexOf(date);
+const prev = index > 0 ? days[index - 1] ?? null : null;
+const next = index >= 0 ? days[index + 1] ?? null : null;
+const events = eventsOn(listed, date);
+const ym: YearMonth = { year: parsed.year, month: parsed.month };
+const monthLabel = `${monthName(ym)} ${parsed.year}`;
+const heading = `Events in ${city.name} on ${longDate(date)}`;
+const step = (iso: string | null) => (iso ? { href: dayPath(iso), label: longDate(iso) } : null);
+const origin = Astro.site?.origin ?? `https://${city.domain}`;
+const pageUrl = new URL(dayPath(date), origin).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: `${city.name} Happenings`, item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: monthLabel, item: new URL(monthPath(ym), origin).href },
+    { '@type': 'ListItem', position: 3, name: longDate(date), item: pageUrl },
+  ],
+};
+---
+
+<Page title={heading} description={heading} jsonLd={[jsonLd]}>
+  <main
+    class="calendar mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+    data-calendar
+    data-timezone={city.timezone}
+    data-built-today={today}
+  >
+    <div class="cal-toolbar">
+      <div class="cal-heading">
+        <h1 class="font-serif text-3xl font-semibold leading-tight sm:text-4xl">{heading}</h1>
+        <p class="scope-links">
+          <a href={weekPath(mondayOf(date))}>See the whole week</a>
+          <a href={monthPath(ym)}>All of {monthName(ym)}</a>
+        </p>
+      </div>
+      <MonthNav kind="day" prev={step(prev)} next={step(next)} />
+    </div>
+    <FilterBar categories={filterCategories(snap.categories, listed)} />
+    <div data-view data-empty-scope="on this day">
+      <TimeGroups
+        events={events}
+        organisers={snap.organisers}
+        cityName={city.name}
+        domain={city.domain}
+        timeZone={city.timezone}
+        showDate={false}
+      />
+      <p class="quiet-line" data-view-empty hidden={events.length > 0}>Nothing listed on this day yet.</p>
+    </div>
+  </main>
+</Page>
+
+<script>
+  import { startCalendar } from '../../scripts/calendar';
+  startCalendar();
+</script>
