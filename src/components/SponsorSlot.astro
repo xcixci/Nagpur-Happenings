@@ -1,0 +1,106 @@
+---
+import { httpUrl, imageUrl } from '../lib/format';
+import type { SponsorRecord } from '../lib/sheet-map';
+
+interface Props {
+  sponsor: SponsorRecord;
+  variant: 'site' | 'weekend';
+}
+
+const { sponsor, variant } = Astro.props;
+const href = httpUrl(sponsor.link_url);
+const src = imageUrl(sponsor.logo_url);
+const Tag = href ? 'a' : 'span';
+---
+
+{variant === 'site' ? (
+  <div class="sponsor-strip">
+    <Tag
+      class="sponsor-strip__row"
+      href={href || undefined}
+      target={href ? '_blank' : undefined}
+      rel={href ? 'sponsored noopener' : undefined}
+      data-umami-event={href ? 'sponsor_click' : undefined}
+      data-umami-event-sponsor_id={href ? sponsor.id : undefined}
+    >
+      <span class="sponsor-kicker">Sponsor</span>
+      <span>Supported by</span>
+      {src && <img src={src} alt="" />}
+      <span>{sponsor.name}</span>
+    </Tag>
+  </div>
+) : (
+  <aside class="sponsor-card">
+    <p class="sponsor-kicker">Sponsor</p>
+    <Tag
+      class="sponsor-card__row"
+      href={href || undefined}
+      target={href ? '_blank' : undefined}
+      rel={href ? 'sponsored noopener' : undefined}
+      data-umami-event={href ? 'sponsor_click' : undefined}
+      data-umami-event-sponsor_id={href ? sponsor.id : undefined}
+    >
+      {src && <img src={src} alt="" />}
+      <span>{sponsor.name}</span>
+    </Tag>
+  </aside>
+)}
+
+<style>
+  .sponsor-kicker {
+    color: var(--color-moss);
+    font-size: 0.875rem;
+  }
+  .sponsor-strip {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .sponsor-strip__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 0.45rem 1rem;
+    color: inherit;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+  .sponsor-strip__row img,
+  .sponsor-card__row img {
+    display: block;
+    width: auto;
+    object-fit: contain;
+  }
+  .sponsor-strip__row img {
+    height: 1.75rem;
+    max-width: 8rem;
+  }
+  .sponsor-card {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .sponsor-card__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .sponsor-card__row img {
+    height: 3rem;
+    max-width: 6rem;
+  }
+  a.sponsor-strip__row:hover,
+  a.sponsor-card__row:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  a.sponsor-strip__row:focus-visible,
+  a.sponsor-card__row:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+</style>

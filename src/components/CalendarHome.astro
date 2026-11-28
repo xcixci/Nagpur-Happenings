@@ -23,16 +23,17 @@ import {
   type TimedEvent,
 } from '../lib/calendar';
 import { cityToday } from '../lib/format';
-import type { DayRecord, EventRecord, OrganiserRecord } from '../lib/sheet-map';
+import type { DayRecord, EventRecord, OrganiserRecord, VenueRecord } from '../lib/sheet-map';
 
 interface Props {
   events: EventRecord[];
   days: DayRecord[];
   organisers: OrganiserRecord[];
+  venues: VenueRecord[];
   categories: { category: string; sub_category: string }[];
 }
 
-const { events, days, organisers, categories } = Astro.props;
+const { events, days, organisers, venues, categories } = Astro.props;
 const listed = calendarEvents(events);
 const today = cityToday(city.timezone);
 const months = visibleMonths(listed, today);
@@ -54,7 +55,7 @@ const names = filterCategories(categories, listed);
 const weekend = weekendRange(today);
 const weekDates = datesFrom(today, datesFrom(today, '9999-12-31')[6] || today);
 const weekendDates = datesFrom(weekend.from, weekend.to);
-const cardProps = { organisers, cityName: city.name, domain: city.domain, timeZone: city.timezone };
+const cardProps = { organisers, venues, cityName: city.name, domain: city.domain, timeZone: city.timezone };
 ---
 
 <div
@@ -104,6 +105,7 @@ const cardProps = { organisers, cityName: city.name, domain: city.domain, timeZo
     data-span-days={weekend.from === weekend.to ? undefined : ''}
   >
     <p class="view-range" data-range>{rangeLabel(weekend.from, weekend.to)}</p>
+    <p class="scope-links"><a href="/this-weekend/">See this weekend</a></p>
     {weekend.from === weekend.to ? (
       <div data-view-body>
         <TimeGroups events={eventsOn(listed, weekend.from)} {...cardProps} />

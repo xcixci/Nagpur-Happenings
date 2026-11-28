@@ -1,3 +1,4 @@
+import { organiserProfile } from './directory.ts';
 import type { DayRecord, EventRecord, OrganiserRecord, VenueRecord } from './sheet-map.ts';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -90,6 +91,8 @@ export interface EventPageModel {
   mapsHref: string;
   entry: string;
   organiserName: string;
+  organiserHref: string;
+  venueHref: string;
   contact: ContactLink | null;
   registration: ContactLink | null;
   registrationNote: string;
@@ -198,6 +201,19 @@ export function hasEnded(
   return today.hour * 60 + today.minute >= endMinutes;
 }
 
+export function isPastEvent(
+  event: { status: string; date: string; start_time: string; end_time: string },
+  timeZone: string,
+  now = new Date(),
+): boolean {
+  if (event.status === 'cancelled') return !!event.date && event.date < cityToday(timeZone, now);
+  return hasEnded(
+    { status: 'published', date: event.date, start_time: event.start_time, end_time: event.end_time },
+    timeZone,
+    now,
+  );
+}
+
 export function httpUrl(value: string): string {
   let s = value.trim();
   if (!s) return '';
@@ -214,11 +230,20 @@ export function httpUrl(value: string): string {
 export function imageUrl(value: string): string {
   const s = value.trim();
   if (!s) return '';
+  if (s.startsWith('file:')) return s;
+  if (s.startsWith('/') && !s.startsWith('//')) return s;
   const drive = s.match(
     /^https?:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/([\w-]{20,})|(?:open|uc)\?(?:[^#]*&)?id=([\w-]{20,}))/i,
   );
   if (drive) return `https://lh3.googleusercontent.com/d/${drive[1] || drive[2]}=w1200`;
   return httpUrl(s);
+}
+
+export function linkList(value: string): string[] {
+  return value
+    .split(/[\s,]+/)
+    .map((part) => httpUrl(part.trim()))
+    .filter(Boolean);
 }
 
 export function withUtm(href: string, citySlug: string, eventSlug: string): string {
@@ -298,6 +323,9 @@ export function eventPageModel(input: {
   const tile = quiet && date ? `${date.day} ${MONTHS[date.month - 1]}` : event.category || 'Event';
   const mode = poster ? 'poster' : logo ? 'logo' : 'tile';
   const venue = event.venue_id ? input.venues.find((item) => item.id === event.venue_id) : undefined;
+  const profile = organiserProfile(input.organisers, event.organiser_id);
+  const organiserHref = profile ? `/organisers/${profile.slug}/` : '';
+  const venueHref = venue ? `/venues/${venue.slug}/` : '';
   const registration = liveRegistration(event, citySlug, cancelled, ended);
   const shareBody = [
     event.title,
@@ -330,6 +358,8 @@ export function eventPageModel(input: {
     mapsHref: mapsHref(event, venue, cityName),
     entry: quiet ? '' : entryLabel(event),
     organiserName: event.organiser_name,
+    organiserHref,
+    venueHref,
     contact: contactOf(event.organiser_contact, citySlug, event.slug),
     registration: registration.link,
     registrationNote: registration.note,
@@ -436,6 +466,7 @@ function eventJsonLd(input: Omit<EventPageModel, 'jsonLd'> & { timeZone: string;
     location: {
       '@type': 'Place',
       name: event.venue_name || event.area || input.cityName,
+      url: input.venueHref ? new URL(input.venueHref, input.pageUrl).href : undefined,
       address: {
         '@type': 'PostalAddress',
         streetAddress: input.address || undefined,
@@ -456,7 +487,9 @@ function eventJsonLd(input: Omit<EventPageModel, 'jsonLd'> & { timeZone: string;
     data.endDate = isoLocal(endIso, event.end_time, input.timeZone);
   }
   if (event.organiser_name) {
-    data.organizer = { '@type': 'Organization', name: event.organiser_name };
+    const organizer: Record<string, unknown> = { '@type': 'Organization', name: event.organiser_name };
+    if (input.organiserHref) organizer.url = new URL(input.organiserHref, input.pageUrl).href;
+    data.organizer = organizer;
   }
   if (event.price_type === 'free' || event.price_type === 'paid') {
     data.isAccessibleForFree = event.price_type === 'free';

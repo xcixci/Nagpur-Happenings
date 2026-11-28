@@ -10,7 +10,7 @@ import {
   MONTHS,
   type TimedEvent,
 } from '../lib/calendar.ts';
-import { cityToday, clockTime, hasEnded } from '../lib/format.ts';
+import { cityToday, clockTime, hasEnded, isPastEvent } from '../lib/format.ts';
 
 function watchFrames(root: ParentNode): void {
   root.querySelectorAll<HTMLElement>('[data-frame]').forEach((frame) => {
@@ -187,6 +187,69 @@ function viewBody(view: HTMLElement, tag: 'ol' | 'div'): HTMLElement {
   return next;
 }
 
+function rebuildWeekend(root: HTMLElement, today: string): void {
+  const events = poolEvents(root);
+  const names = namedDays(root);
+  const weekend = weekendRange(today);
+  const weekendView = root.querySelector<HTMLElement>('[data-view-weekend]');
+  if (!weekendView) return;
+  const range = weekendView.querySelector('[data-range]');
+  if (range) range.textContent = rangeLabel(weekend.from, weekend.to);
+  if (weekend.from === weekend.to) {
+    weekendView.removeAttribute('data-span-days');
+    fillTime(viewBody(weekendView, 'div'), root, onDate(events, weekend.from));
+  } else {
+    weekendView.setAttribute('data-span-days', '');
+    fillDays(viewBody(weekendView, 'ol'), root, weekend.from, weekend.to, today, names, events);
+  }
+}
+
+function splitSchedule(root: HTMLElement, timeZone: string, now: Date): void {
+  root.querySelectorAll<HTMLElement>('[data-schedule]').forEach((schedule) => {
+    const upcoming = schedule.querySelector<HTMLElement>('[data-upcoming-list]');
+    const past = schedule.querySelector<HTMLElement>('[data-past-list]');
+    if (!upcoming || !past) return;
+    const cards = [...schedule.querySelectorAll<HTMLElement>('[data-event]')];
+    const up: HTMLElement[] = [];
+    const down: HTMLElement[] = [];
+    for (const card of cards) {
+      const pastEvent = isPastEvent(
+        {
+          status: card.dataset.status === 'cancelled' ? 'cancelled' : 'published',
+          date: card.dataset.date || '',
+          start_time: card.dataset.start || '',
+          end_time: card.dataset.end || '',
+        },
+        timeZone,
+        now,
+      );
+      (pastEvent ? down : up).push(card);
+    }
+    const key = (card: HTMLElement) =>
+      `${card.dataset.date || ''} ${card.dataset.start || '99:99'} ${card.dataset.cardId || ''}`;
+    up.sort((a, b) => key(a).localeCompare(key(b)));
+    down.sort((a, b) => key(b).localeCompare(key(a)));
+    const fill = (list: HTMLElement, items: HTMLElement[]) => {
+      list.replaceChildren();
+      for (const card of items) {
+        const item = document.createElement('li');
+        item.append(card);
+        list.append(item);
+      }
+    };
+    fill(upcoming, up);
+    fill(past, down);
+    const upEmpty = schedule.querySelector<HTMLElement>('[data-upcoming-empty]');
+    const pastEmpty = schedule.querySelector<HTMLElement>('[data-past-empty]');
+    const upSection = schedule.querySelector<HTMLElement>('[data-upcoming-section]');
+    const pastSection = schedule.querySelector<HTMLElement>('[data-past-section]');
+    if (upEmpty) upEmpty.hidden = up.length > 0;
+    if (pastEmpty) pastEmpty.hidden = down.length > 0;
+    if (upSection) upSection.hidden = false;
+    if (pastSection) pastSection.hidden = false;
+  });
+}
+
 function rebuildQuick(root: HTMLElement, today: string): void {
   const events = poolEvents(root);
   const names = namedDays(root);
@@ -196,19 +259,7 @@ function rebuildQuick(root: HTMLElement, today: string): void {
     if (range) range.textContent = rangeLabel(today, today);
     fillTime(viewBody(todayView, 'div'), root, onDate(events, today));
   }
-  const weekend = weekendRange(today);
-  const weekendView = root.querySelector<HTMLElement>('[data-view-weekend]');
-  if (weekendView) {
-    const range = weekendView.querySelector('[data-range]');
-    if (range) range.textContent = rangeLabel(weekend.from, weekend.to);
-    if (weekend.from === weekend.to) {
-      weekendView.removeAttribute('data-span-days');
-      fillTime(viewBody(weekendView, 'div'), root, onDate(events, weekend.from));
-    } else {
-      weekendView.setAttribute('data-span-days', '');
-      fillDays(viewBody(weekendView, 'ol'), root, weekend.from, weekend.to, today, names, events);
-    }
-  }
+  rebuildWeekend(root, today);
   const weekView = root.querySelector<HTMLElement>('[data-view-week]');
   if (weekView) {
     const from = today;
@@ -294,6 +345,7 @@ function showMonth(root: HTMLElement, key: string): void {
   const index = months.indexOf(key);
   setArrow(root, 'prev', index > 0 ? months[index - 1] ?? null : null);
   setArrow(root, 'next', index >= 0 && index < months.length - 1 ? months[index + 1] ?? null : null);
+  paintResult(root);
 }
 
 function setArrow(root: HTMLElement, dir: 'prev' | 'next', key: string | null): void {
@@ -324,23 +376,49 @@ function syncEnded(root: HTMLElement, timeZone: string, now: Date): void {
   });
 }
 
-function selected(root: HTMLElement): { cats: Set<string>; freeOnly: boolean } {
+function draft(root: HTMLElement): { cats: Set<string>; freeOnly: boolean } {
   const cats = new Set<string>();
-  root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]').forEach((button) => {
-    if (button.getAttribute('aria-pressed') === 'true' && button.dataset.filterCat) cats.add(button.dataset.filterCat);
+  root.querySelectorAll<HTMLInputElement>('[data-filter-cat]').forEach((box) => {
+    if (box.checked && box.dataset.filterCat) cats.add(box.dataset.filterCat);
   });
   const freeOnly = root.querySelector('[data-free-only]')?.getAttribute('aria-pressed') === 'true';
   return { cats, freeOnly };
 }
 
-function paintFilters(root: HTMLElement, cats: Set<string>, freeOnly: boolean): void {
-  root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]').forEach((button) => {
-    button.setAttribute('aria-pressed', cats.has(button.dataset.filterCat || '') ? 'true' : 'false');
-  });
+function paintChrome(root: HTMLElement, cats: Set<string>, freeOnly: boolean): void {
   root.querySelector('[data-free-only]')?.setAttribute('aria-pressed', freeOnly ? 'true' : 'false');
   const count = root.querySelector('[data-filter-count]');
   if (count) count.textContent = cats.size > 0 ? ` (${cats.size})` : '';
   renderChips(root, cats);
+}
+
+function countScope(root: HTMLElement): ParentNode {
+  if (root.dataset.home !== 'true') return root;
+  const picked = root.querySelector<HTMLInputElement>('input[name="cal-view"]:checked');
+  if (picked?.id === 'cal-view-month') return root.querySelector('[data-month-panel]:not([hidden])') ?? root;
+  if (picked?.id === 'cal-view-today') return root.querySelector('[data-view-today]') ?? root;
+  if (picked?.id === 'cal-view-weekend') return root.querySelector('[data-view-weekend]') ?? root;
+  if (picked?.id === 'cal-view-week') return root.querySelector('[data-view-week]') ?? root;
+  return root;
+}
+
+function countNodes(root: HTMLElement): HTMLElement[] {
+  const scope = countScope(root);
+  const items = [...scope.querySelectorAll<HTMLElement>('[data-filter-item]')];
+  if (items.length > 0) return items;
+  const cards = [...scope.querySelectorAll<HTMLElement>('[data-card-id]')];
+  if (cards.length > 0) return cards;
+  return [...scope.querySelectorAll<HTMLElement>('.day__chip')];
+}
+
+function paintResult(root: HTMLElement): void {
+  const button = root.querySelector<HTMLButtonElement>('[data-filters-apply]');
+  const panel = root.querySelector<HTMLElement>('[data-filter-panel]');
+  if (!button || !panel) return;
+  const { cats, freeOnly } = draft(root);
+  const n = countNodes(root).filter((el) => matches(el, cats, freeOnly)).length;
+  const noun = panel.dataset.filterNoun || 'event';
+  button.textContent = `Show ${n} ${n === 1 ? noun : `${noun}s`}`;
 }
 
 function renderChips(root: HTMLElement, cats: Set<string>): void {
@@ -380,12 +458,12 @@ function matches(el: HTMLElement, cats: Set<string>, freeOnly: boolean): boolean
   return true;
 }
 
-function applyFilters(root: HTMLElement): void {
-  const { cats, freeOnly } = selected(root);
-  paintFilters(root, cats, freeOnly);
+function applyFilters(root: HTMLElement, selection = draft(root)): void {
+  const { cats, freeOnly } = selection;
+  paintChrome(root, cats, freeOnly);
   const filtering = cats.size > 0 || freeOnly;
 
-  root.querySelectorAll<HTMLElement>('[data-event]').forEach((el) => {
+  root.querySelectorAll<HTMLElement>('[data-event], [data-filter-item]').forEach((el) => {
     if (el.classList.contains('day__chip')) return;
     el.hidden = !matches(el, cats, freeOnly);
   });
@@ -451,11 +529,35 @@ function applyFilters(root: HTMLElement): void {
     if (group.hasAttribute('data-agenda-day')) group.hidden = visible === 0;
   });
 
+  root.querySelectorAll<HTMLElement>('[data-schedule]').forEach((schedule) => {
+    for (const side of ['upcoming', 'past']) {
+      const list = schedule.querySelector<HTMLElement>(`[data-${side}-list]`);
+      const section = schedule.querySelector<HTMLElement>(`[data-${side}-section]`);
+      const empty = schedule.querySelector<HTMLElement>(`[data-${side}-empty]`);
+      const count = list
+        ? [...list.querySelectorAll<HTMLElement>('[data-event]')].filter((card) => !card.hidden).length
+        : 0;
+      if (empty) empty.hidden = filtering || count > 0;
+      if (section) section.hidden = filtering && count === 0;
+    }
+  });
+
   root.querySelectorAll<HTMLElement>('[data-view]').forEach((view) => {
     const empty = view.querySelector<HTMLElement>('[data-view-empty]');
     if (!empty) return;
     if (view.hasAttribute('data-span-days')) {
       empty.hidden = true;
+      return;
+    }
+    if (view.querySelector('[data-schedule]')) {
+      const visible = [...view.querySelectorAll<HTMLElement>('[data-schedule] [data-event]')].some((card) => !card.hidden);
+      empty.hidden = visible || !filtering;
+      if (!empty.hidden) empty.textContent = emptyCopy(view.dataset.emptyScope || 'for today', cats.size > 0, freeOnly);
+      return;
+    }
+    if (view.querySelector('[data-filter-item]')) {
+      empty.hidden = !!view.querySelector('[data-filter-item]:not([hidden])');
+      if (!empty.hidden) empty.textContent = emptyCopy(view.dataset.emptyScope || 'here', cats.size > 0, freeOnly);
       return;
     }
     const visible = view.querySelector('[data-time-group]:not([hidden])');
@@ -477,14 +579,13 @@ function applyFilters(root: HTMLElement): void {
   });
 }
 
-function writeUrl(root: HTMLElement): void {
-  const { cats, freeOnly } = selected(root);
+function writeUrl(root: HTMLElement, selection: { cats: Set<string>; freeOnly: boolean }): void {
   const params = new URLSearchParams();
-  root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]').forEach((button) => {
-    const name = button.dataset.filterCat || '';
-    if (name && cats.has(name)) params.append('cat', name);
+  root.querySelectorAll<HTMLInputElement>('[data-filter-cat]').forEach((box) => {
+    const name = box.dataset.filterCat || '';
+    if (name && selection.cats.has(name)) params.append('cat', name);
   });
-  if (freeOnly) params.set('free', '1');
+  if (selection.freeOnly) params.set('free', '1');
   const query = params.toString();
   const next = `${location.pathname}${query ? `?${query}` : ''}${location.hash}`;
   history.replaceState(null, '', next);
@@ -493,63 +594,65 @@ function writeUrl(root: HTMLElement): void {
 function readUrl(root: HTMLElement): void {
   const params = new URLSearchParams(location.search);
   const wanted = new Set(params.getAll('cat'));
-  const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]')];
-  const known = buttons.map((button) => button.dataset.filterCat || '').filter(Boolean);
-  const allSelected = known.length > 0 && known.every((name) => wanted.has(name));
-  buttons.forEach((button) => {
-    const name = button.dataset.filterCat || '';
-    button.setAttribute('aria-pressed', !allSelected && wanted.has(name) ? 'true' : 'false');
+  root.querySelectorAll<HTMLInputElement>('[data-filter-cat]').forEach((box) => {
+    box.checked = wanted.has(box.dataset.filterCat || '');
   });
   const freeOnly = params.get('free') === '1';
   root.querySelector('[data-free-only]')?.setAttribute('aria-pressed', freeOnly ? 'true' : 'false');
 }
 
 function bindFilters(root: HTMLElement): void {
-  const buttons = () => [...root.querySelectorAll<HTMLButtonElement>('[data-filter-cat]')];
-  const sync = () => {
-    applyFilters(root);
-    writeUrl(root);
+  let applied = draft(root);
+  const boxes = () => [...root.querySelectorAll<HTMLInputElement>('[data-filter-cat]')];
+  const commit = () => {
+    applied = draft(root);
+    applyFilters(root, applied);
+    writeUrl(root, applied);
+    paintResult(root);
   };
-  buttons().forEach((button) => {
-    button.addEventListener('click', () => {
-      const pressed = button.getAttribute('aria-pressed') === 'true';
-      button.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-      const on = buttons().filter((item) => item.getAttribute('aria-pressed') === 'true');
-      if (on.length === buttons().length) buttons().forEach((item) => item.setAttribute('aria-pressed', 'false'));
-      sync();
-    });
+  root.querySelector('[data-filter-panel]')?.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement && target.hasAttribute('data-filter-cat')) paintResult(root);
   });
   root.querySelector('[data-filter-chips]')?.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest('[data-filter-clear-all]')) {
-      buttons().forEach((button) => button.setAttribute('aria-pressed', 'false'));
-      sync();
+      boxes().forEach((box) => { box.checked = false; });
+      commit();
       return;
     }
     const remove = target.closest<HTMLButtonElement>('[data-filter-clear]');
     if (!remove) return;
     const name = remove.dataset.filterClear || '';
-    const match = buttons().find((button) => button.dataset.filterCat === name);
-    match?.setAttribute('aria-pressed', 'false');
-    sync();
+    const match = boxes().find((box) => box.dataset.filterCat === name);
+    if (match) match.checked = false;
+    commit();
   });
   root.querySelector('[data-free-only]')?.addEventListener('click', () => {
     const button = root.querySelector('[data-free-only]');
     const pressed = button?.getAttribute('aria-pressed') === 'true';
-    button?.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-    sync();
+    applied = { cats: applied.cats, freeOnly: !pressed };
+    applyFilters(root, applied);
+    writeUrl(root, applied);
+    paintResult(root);
   });
-  bindPanel(root);
+  root.querySelectorAll('input[name="cal-view"]').forEach((input) => {
+    input.addEventListener('change', () => paintResult(root));
+  });
+  bindPanel(root, commit);
+  paintResult(root);
 }
 
-function bindPanel(root: HTMLElement): void {
+function bindPanel(root: HTMLElement, commit: () => void): void {
   const panel = root.querySelector<HTMLElement>('[data-filter-panel]');
   const openBtn = root.querySelector<HTMLButtonElement>('[data-filters-open]');
   const sheet = panel?.querySelector<HTMLElement>('.filter-panel__sheet');
   if (!panel || !openBtn) return;
   const phone = window.matchMedia('(max-width: 639px)');
   const setOpen = (open: boolean) => {
+    if (!open && !panel.hidden) commit();
+    if (open) paintResult(root);
     panel.hidden = !open;
     openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.body.classList.toggle('filter-sheet-open', open && phone.matches);
@@ -582,7 +685,10 @@ export function startCalendar(): void {
     retitleAgenda(root, today);
     splitEarlier(root, today);
     if (root.dataset.home === 'true') rebuildQuick(root, today);
+    if (root.dataset.weekendPage === 'true') rebuildWeekend(root, today);
   }
+
+  splitSchedule(root, timeZone, now);
 
   if (root.dataset.home === 'true') {
     const months = (root.dataset.months || '').split(',').filter(Boolean);

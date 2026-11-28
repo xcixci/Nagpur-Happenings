@@ -1,0 +1,45 @@
+---
+import EventCard from './EventCard.astro';
+import { isPastEvent } from '../lib/format';
+import type { EventRecord, OrganiserRecord, VenueRecord } from '../lib/sheet-map';
+
+interface Props {
+  events: EventRecord[];
+  organisers: OrganiserRecord[];
+  venues: VenueRecord[];
+  cityName: string;
+  domain: string;
+  timeZone: string;
+}
+
+const { events, organisers, venues, cityName, domain, timeZone } = Astro.props;
+const key = (event: EventRecord) => `${event.date} ${event.start_time || '99:99'} ${event.id}`;
+const upcoming = events.filter((event) => !isPastEvent(event, timeZone)).sort((a, b) => key(a).localeCompare(key(b)));
+const past = events.filter((event) => isPastEvent(event, timeZone)).sort((a, b) => key(b).localeCompare(key(a)));
+const cardProps = { organisers, venues, cityName, domain, timeZone };
+---
+
+<div data-schedule>
+  <section data-upcoming-section>
+    <h2 class="time-heading">Upcoming</h2>
+    <ul class="event-list" data-upcoming-list>
+      {upcoming.map((event) => (
+        <li>
+          <EventCard event={event} {...cardProps} />
+        </li>
+      ))}
+    </ul>
+    <p class="quiet-line" data-upcoming-empty hidden={upcoming.length > 0}>No upcoming events.</p>
+  </section>
+  <section data-past-section>
+    <h2 class="time-heading">Past</h2>
+    <ul class="event-list" data-past-list>
+      {past.map((event) => (
+        <li>
+          <EventCard event={event} {...cardProps} />
+        </li>
+      ))}
+    </ul>
+    <p class="quiet-line" data-past-empty hidden={past.length > 0}>No past events.</p>
+  </section>
+</div>

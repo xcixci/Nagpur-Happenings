@@ -1,7 +1,7 @@
 {
   "city": "nagpur",
   "timezone": "Asia/Kolkata",
-  "fetched_at": "2026-11-28T03:32:04.010Z",
+  "fetched_at": "2026-11-28T13:03:52.259Z",
   "events": [
     {
       "id": "NH-014",
@@ -1928,6 +1928,42 @@
       "other_cities": "",
       "status": "listed",
       "verified": false
+    },
+    {
+      "id": "ORG-018",
+      "slug": "orange-hunter",
+      "name": "Orange Hunter",
+      "type": "community",
+      "category": "Social, Impact & Families",
+      "sub_category": "Support Groups & Peer Circles",
+      "tagline": "For Nagpur’s overthinkers, ADHD brains, and anyone tired of pretending they’re fine.",
+      "description": "Orange Hunter brings together Nagpur’s neurodivergent and mental health community, welcoming individuals navigating ADHD, autism, dyslexia, anxiety, depression, and other behavioural or cognitive differences. We organise low-pressure, confidential cafe meetups where people can speak openly without stigma or masking. Expect a relaxed, small-group setting built around real conversation, active listening, and shared lived experiences rather than clinical therapy or toxic positivity. Come as you are, share only what you want, and connect with peers who get it.",
+      "logo_url": "https://drive.google.com/open?id=1hcvXLcEwNyY8ypGk-mXuFpJIYF9OHOU0",
+      "instagram_url": "https://www.instagram.com/orangehunterxci/",
+      "whatsapp_url": "https://chat.whatsapp.com/CTV5TWjOwMW7zKxY75wUok",
+      "other_links": "",
+      "founded": "August 2026",
+      "languages": [
+        "English",
+        "Hindi",
+        "Marathi",
+        "Morse Code"
+      ],
+      "meeting_frequency": "Irregular",
+      "usual_time": "Sunday 11 AM",
+      "area": "Civil Lines",
+      "turnout": "Under 10",
+      "price_type": "mixed",
+      "typical_price": "200",
+      "alcohol": "never",
+      "how_to_join": "RSVP on Instagram",
+      "tags": [
+        "For neurodivergent people"
+      ],
+      "founders": "Arinjay",
+      "other_cities": "",
+      "status": "listed",
+      "verified": true
     }
   ],
   "venues": [

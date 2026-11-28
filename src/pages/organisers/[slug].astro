@@ -1,0 +1,203 @@
+---
+import EventSchedule from '../../components/EventSchedule.astro';
+import EventMedia from '../../components/EventMedia.astro';
+import FilterBar from '../../components/FilterBar.astro';
+import Page from '../../layouts/Page.astro';
+import { eventsFor, usedCategories } from '../../lib/calendar';
+import { categoryIcon } from '../../lib/category-icons';
+import { city } from '../../lib/city';
+import {
+  organiserPrice,
+  organiserTypeLabel,
+  servesAlcohol,
+  sinceYear,
+  taglineOf,
+  verifiedOrganisers,
+} from '../../lib/directory';
+import { cityToday, httpUrl, linkList, withUtm } from '../../lib/format';
+import { localLogo } from '../../lib/logos';
+import { loadSnapshot } from '../../lib/snapshot';
+
+export function getStaticPaths() {
+  const snap = loadSnapshot();
+  return verifiedOrganisers(snap.organisers).map((organiser) => ({
+    params: { slug: organiser.slug },
+  }));
+}
+
+const slug = Astro.params.slug;
+const snap = loadSnapshot();
+const organiser = verifiedOrganisers(snap.organisers).find((item) => item.slug === slug);
+if (!organiser || !slug) throw new Error('Missing organiser');
+
+const origin = Astro.site?.origin ?? `https://${city.domain}`;
+const pagePath = `/organisers/${organiser.slug}/`;
+const pageUrl = new URL(pagePath, origin).href;
+const today = cityToday(city.timezone);
+const events = eventsFor(snap.events, 'organiser_id', organiser.id);
+const categories = usedCategories(snap.categories, events);
+const logo = localLogo(organiser.id);
+const tagline = taglineOf(organiser);
+const type = organiserTypeLabel(organiser.type);
+const year = sinceYear(organiser.founded);
+const price = organiserPrice(organiser);
+const alcohol = servesAlcohol(organiser);
+const tags = organiser.tags.slice(0, 5);
+const categoryLine = [organiser.category, organiser.sub_category].filter(Boolean).join(' · ');
+const description = organiser.description.trim();
+const summary = tagline || description.slice(0, 180) || `${organiser.name} in ${city.name}.`;
+
+function hostLabel(href: string): string {
+  try {
+    return new URL(href).hostname.replace(/^www\./, '');
+  } catch {
+    return 'Website';
+  }
+}
+
+const links: { href: string; label: string }[] = [];
+const instagram = httpUrl(organiser.instagram_url);
+const whatsapp = httpUrl(organiser.whatsapp_url);
+if (instagram) links.push({ href: instagram, label: 'Instagram' });
+if (whatsapp) links.push({ href: whatsapp, label: 'WhatsApp' });
+for (const href of linkList(organiser.other_links)) {
+  links.push({ href: withUtm(href, city.slug, organiser.slug), label: hostLabel(href) });
+}
+
+const facts: { label: string; value: string }[] = [];
+if (year) facts.push({ label: 'Since', value: year });
+if (organiser.languages.length) facts.push({ label: 'Languages', value: organiser.languages.join(', ') });
+if (organiser.meeting_frequency) facts.push({ label: 'Meets', value: organiser.meeting_frequency });
+if (organiser.usual_time) facts.push({ label: 'Usual time', value: organiser.usual_time });
+if (organiser.area) facts.push({ label: 'Area', value: organiser.area });
+if (organiser.turnout) facts.push({ label: 'Turnout', value: organiser.turnout });
+if (price) facts.push({ label: 'Entry', value: price });
+if (organiser.how_to_join) facts.push({ label: 'How to join', value: organiser.how_to_join });
+if (organiser.founders.trim()) facts.push({ label: 'Founders', value: organiser.founders.trim() });
+if (organiser.other_cities.trim()) facts.push({ label: 'Also in', value: organiser.other_cities.trim() });
+
+const organization: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: organiser.name,
+  url: pageUrl,
+};
+if (description) organization.description = description;
+else if (tagline) organization.description = tagline;
+if (logo) organization.logo = new URL(logo, origin).href;
+const sameAs = [instagram, whatsapp, ...linkList(organiser.other_links)].filter(Boolean);
+if (sameAs.length) organization.sameAs = sameAs;
+if (organiser.area) {
+  organization.address = {
+    '@type': 'PostalAddress',
+    addressLocality: organiser.area,
+    addressRegion: city.name,
+    addressCountry: 'IN',
+  };
+}
+if (organiser.founders.trim()) organization.founder = { '@type': 'Person', name: organiser.founders.trim() };
+
+const breadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: `${city.name} Happenings`, item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: 'Organisers', item: new URL('/organisers/', origin).href },
+    { '@type': 'ListItem', position: 3, name: organiser.name, item: pageUrl },
+  ],
+};
+const button =
+  'inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-4 font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+---
+
+<Page title={`${organiser.name} · ${city.name} Happenings`} description={summary} canonical={pageUrl} jsonLd={[organization, breadcrumb]}>
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+    <p>
+      <a class="text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/organisers/">← All organisers</a>
+    </p>
+    <div class="mt-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <EventMedia
+        mode={logo ? 'logo' : 'tile'}
+        src={logo}
+        alt={logo ? `${organiser.name} logo` : ''}
+        tile={organiser.category || organiser.name}
+        quiet={false}
+        frameClass="rounded-lg"
+        icon={categoryIcon(organiser.category)}
+      />
+      <div class="mt-4 min-w-0 lg:mt-0">
+        {categoryLine && <p class="text-sm font-semibold text-moss">{categoryLine}</p>}
+        <h1 class="font-serif text-3xl font-semibold leading-tight text-balance sm:text-4xl">{organiser.name}</h1>
+        {type && <p class="mt-1 text-moss">{type}</p>}
+        {alcohol && <p class="mt-3"><span class="rounded-full bg-paper-deep px-3 py-1 text-sm font-medium">Alcohol served</span></p>}
+        {tagline && <p class="mt-4 text-lg leading-relaxed">{tagline}</p>}
+        {description && <p class="mt-4 whitespace-pre-line leading-relaxed">{description}</p>}
+        {facts.length > 0 && (
+          <dl class="mt-6 grid grid-cols-[7.5rem_minmax(0,1fr)] gap-x-3 gap-y-3">
+            {facts.map((fact) => (
+              <div class="contents">
+                <dt class="text-moss">{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {tags.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => <li class="rounded-full bg-paper-deep px-3 py-1 text-sm">{tag}</li>)}
+          </ul>
+        )}
+        {links.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+            {links.map((link) => (
+              <li>
+                <a class="text-ink underline" href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div class="mt-6">
+          <button
+            class={button}
+            type="button"
+            data-notify
+            data-umami-event="notify_interest"
+            data-umami-event-organiser_id={organiser.id}
+          >
+            Notify me
+          </button>
+          <p class="mt-3 max-w-prose" data-notify-note hidden>
+            Coming soon. Meanwhile, follow our <a class="text-ink underline" href={city.whatsapp_channel_url}>WhatsApp channel</a>.
+          </p>
+          <noscript>
+            <p class="mt-3 max-w-prose">
+              Coming soon. Meanwhile, follow our <a class="text-ink underline" href={city.whatsapp_channel_url}>WhatsApp channel</a>.
+            </p>
+          </noscript>
+        </div>
+      </div>
+    </div>
+
+    <div class="calendar mt-8" data-calendar data-timezone={city.timezone} data-built-today={today}>
+      {events.length > 0 && <FilterBar categories={categories} />}
+      <div data-view data-empty-scope="for this organiser">
+        <EventSchedule
+          events={events}
+          organisers={snap.organisers}
+          venues={snap.venues}
+          cityName={city.name}
+          domain={city.domain}
+          timeZone={city.timezone}
+        />
+        <p class="quiet-line" data-view-empty hidden>Nothing listed for this organiser yet.</p>
+      </div>
+    </div>
+  </main>
+</Page>
+
+<script>
+  import { startCalendar } from '../../scripts/calendar';
+  import { startNotify } from '../../scripts/notify';
+  startCalendar();
+  startNotify();
+</script>

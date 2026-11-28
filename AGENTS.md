@@ -84,9 +84,14 @@ never includes them.
 
 The directory is called "Organisers" everywhere (pages, data, Sheet tab). Each profile
 shows its `type` under the name. `alcohol` of sometimes or usually shows an "Alcohol
-served" label. `founders` shows only when filled in. No logo → category tile.
+served" label. `founders` shows only when filled in. No logo → category tile. The build
+saves each logo into `public/logos/<id>.jpg` (gitignored). A failed download uses the
+category tile and does not fail the build.
+Nobody gets a profile they didn't ask for. `verified` means they filled in the form or
+confirmed. Only a listed organiser with `verified` true has a page. On events, any other
+organiser stays a plain name.
 Organisers sign up through the form; NH copies approved rows into the Organisers tab by
-hand. Nothing from the form publishes by itself.
+hand and marks them verified. Nothing from the form publishes by itself.
 
 venues: `id` (V-001) · `slug` · `name` · `area` · `address` · `maps_url` · `website_url` ·
 `instagram_url`
@@ -100,7 +105,8 @@ Rules:
   working when an event is renamed or postponed.
 - Cancelled events stay on the calendar and on their event page, in their place,
   with the title struck through and marked Cancelled. Drafts never appear.
-- Only `listed` organisers appear anywhere: pages, feeds, sitemap.
+- Only `listed` organisers are stored. A profile on `/organisers/`, in feeds and in the
+  sitemap also needs `verified`. Unverified organisers stay plain text on events.
 - Events are alcohol-free unless `vibe_tags` contains "Alcohol served".
 - If an event's organiser or venue isn't in its tab yet, show the plain name without a
   link. Never fail the build over it.
@@ -139,14 +145,20 @@ Rules:
   has no page to return to.
 - `/e/<ID>/` stays the short share link and redirects to the event page. Links already
   shared on WhatsApp (e.g. `/e/NH-019/`) must keep working.
-- `/organisers/` and `/organisers/<slug>/` (upcoming and past events). Each organiser
-  page has a "Notify me" button. It is a demand test, not real notifications: a tap
-  records `notify_interest` in Umami and shows "Coming soon. Meanwhile, follow our
-  WhatsApp channel" with the channel link.
+- `/organisers/` and `/organisers/<slug>/`: listed organisers with `verified` true.
+  The index says "Every listing on Nagpur Happenings is expected to welcome everyone.",
+  links "List your community" to `/register/` when `organiser_form_url` is set, and
+  filters by category. Upcoming and past events are split in the visitor's browser;
+  the build-time split is what you get with JavaScript off. Each organiser page has
+  a "Notify me" button. It is a demand test, not real notifications: a tap records
+  `notify_interest` in Umami and shows "Coming soon. Meanwhile, follow our WhatsApp
+  channel" with the channel link.
 - `/register/` redirects to `organiser_form_url` (in v1 and v2), so shared sign-up links
   keep working when the form changes.
-- `/venues/` and `/venues/<slug>/` (events held there).
-- `/this-weekend/`, rebuilt automatically with every build.
+- `/venues/` and `/venues/<slug>/`: address, a Maps link, and the upcoming and past
+  events held there, split in the visitor's browser the same way.
+- `/this-weekend/`: Saturday and Sunday, worked out in the browser like Today, with
+  the built page as the fallback. Rebuilt automatically with every build.
 - `/blog/` and `/blog/<slug>/` from Markdown in `src/content/blog/`. A post with a future
   `date` stays hidden until that date.
 - `/api/events.json`, `/api/organisers.json`, `/api/venues.json`: public upcoming data
@@ -160,6 +172,9 @@ Rules:
   cream), the jaali and tiles patterns, and the category icons. Use these for the header,
   favicon, PWA icons and preview cards. Never use the retired orange `NH Logo.png` or
   `NH icon.png`.
+- Header: the logo on the left, and "This weekend" and "Organisers" on the right. If
+  that row would wrap, leave the wordmark off and keep the icon. Venues stays in the
+  footer.
 - Patterns: jaali only as a quiet background (about 6% on cream, 8% on green), never
   behind event lists; tiles only as corner accents, never behind text.
 - Mobile-first. Check every change at 390px wide, then at 1280px.
@@ -178,10 +193,13 @@ Rules:
   (Today, Weekend, 7 days, Month) is one full-width segmented control, with Filters and
   Free entry on the next row. From 640px they share one row. Filters opens a bottom
   sheet on phones and a dropdown from 640px up. The panel holds categories, each with
-  its icon, in one group so tags can be added later as a second group. A selected
-  category, in the panel and as a chip under the row, is filled green with cream
-  text, the same as Free entry when it is on. Each chip has ✕, and there is a
-  "Clear all". With JavaScript off, every event stays listed.
+  its icon, as checkboxes so several can be picked, in one group so tags can be added
+  later as a second group. A button at the bottom says "Show N events" ("Show N
+  organisers" on the directory) with the live count and closes the panel. Tapping
+  outside or pressing Esc closes it too. The chips and the Filters count update when
+  it closes. A selected chip is filled green with cream text, the same as Free entry
+  when it is on. Each chip has ✕, and there is a "Clear all". With JavaScript off,
+  every event stays listed.
 - Dates: "Sat, 28 Nov" on cards (add the year only if it isn't the current year),
   except on a day page, which shows only the time. "Saturday, 28 November 2026" on
   event pages. Never `2026-11-28` or `28/11/2026`.

@@ -1,0 +1,100 @@
+---
+import AgendaDay from '../components/AgendaDay.astro';
+import EventCard from '../components/EventCard.astro';
+import FilterBar from '../components/FilterBar.astro';
+import SponsorSlot from '../components/SponsorSlot.astro';
+import TimeGroups from '../components/TimeGroups.astro';
+import Page from '../layouts/Page.astro';
+import {
+  calendarEvents,
+  datesFrom,
+  dayNames,
+  eventsOn,
+  filterCategories,
+  rangeLabel,
+  weekendRange,
+} from '../lib/calendar';
+import { city } from '../lib/city';
+import { cityToday } from '../lib/format';
+import { loadSnapshot } from '../lib/snapshot';
+import { liveSponsor } from '../lib/sponsors';
+
+const snap = loadSnapshot();
+const today = cityToday(city.timezone);
+const listed = calendarEvents(snap.events);
+const weekend = weekendRange(today);
+const weekendDates = datesFrom(weekend.from, weekend.to);
+const singleDay = weekend.from === weekend.to;
+const sponsor = liveSponsor(snap.sponsors, 'weekend', today);
+const origin = Astro.site?.origin ?? `https://${city.domain}`;
+const pageUrl = new URL('/this-weekend/', origin).href;
+const title = `This weekend in ${city.name}`;
+const description = `Events in ${city.name} this weekend.`;
+const cardProps = {
+  organisers: snap.organisers,
+  venues: snap.venues,
+  cityName: city.name,
+  domain: city.domain,
+  timeZone: city.timezone,
+};
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: `${city.name} Happenings`, item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: 'This weekend', item: pageUrl },
+  ],
+};
+---
+
+<Page title={title} description={description} canonical={pageUrl} jsonLd={[jsonLd]}>
+  <main
+    class="mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+    data-calendar
+    data-weekend-page="true"
+    data-timezone={city.timezone}
+    data-built-today={today}
+  >
+    <h1 class="font-serif text-3xl font-semibold leading-tight sm:text-4xl">{title}</h1>
+    <FilterBar categories={filterCategories(snap.categories, listed)} />
+    <div
+      data-view
+      data-view-weekend
+      data-empty-scope="for this weekend"
+      data-span-days={singleDay ? undefined : ''}
+    >
+      <p class="view-range" data-range>{rangeLabel(weekend.from, weekend.to)}</p>
+      {singleDay ? (
+        <div data-view-body>
+          <TimeGroups events={eventsOn(listed, weekend.from)} {...cardProps} />
+        </div>
+      ) : (
+        <ol class="agenda-days" data-view-body>
+          {weekendDates.map((date) => (
+            <AgendaDay
+              date={date}
+              names={dayNames(snap.days, date)}
+              events={eventsOn(listed, date)}
+              today={today}
+              kind="week"
+              {...cardProps}
+            />
+          ))}
+        </ol>
+      )}
+      <p class="quiet-line" data-view-empty hidden>Nothing listed for this weekend yet.</p>
+    </div>
+    {sponsor && <SponsorSlot sponsor={sponsor} variant="weekend" />}
+    <ul hidden data-named-days>
+      {snap.days.map((day) => <li data-date={day.date}>{day.name}</li>)}
+    </ul>
+    <template id="calendar-card-pool">
+      {listed.map((event) => <EventCard event={event} {...cardProps} />)}
+    </template>
+  </main>
+</Page>
+
+<script>
+  import { startCalendar } from '../scripts/calendar';
+  startCalendar();
+</script>

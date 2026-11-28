@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "snapshot": "node --experimental-strip-types scripts/snapshot.ts",
+    "logos": "node --experimental-strip-types scripts/logos.ts",
     "cards": "node --experimental-strip-types scripts/cards.ts",
-    "build": "npm run snapshot && npm run cards && astro build",
+    "build": "npm run snapshot && npm run logos && npm run cards && astro build",
     "preview": "astro preview"
   },
   "dependencies": {

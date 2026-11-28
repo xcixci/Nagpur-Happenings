@@ -13,7 +13,7 @@ import {
   weekdayHeaders,
 } from '../lib/calendar';
 import { clockTime } from '../lib/format';
-import type { DayRecord, EventRecord, OrganiserRecord } from '../lib/sheet-map';
+import type { DayRecord, EventRecord, OrganiserRecord, VenueRecord } from '../lib/sheet-map';
 
 interface Props {
   year: number;
@@ -21,6 +21,7 @@ interface Props {
   events: EventRecord[];
   days: DayRecord[];
   organisers: OrganiserRecord[];
+  venues: VenueRecord[];
   cityName: string;
   domain: string;
   timeZone: string;
@@ -34,6 +35,7 @@ const {
   events,
   days,
   organisers,
+  venues,
   cityName,
   domain,
   timeZone,
@@ -152,6 +154,7 @@ const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
             today={today}
             kind="agenda"
             organisers={organisers}
+            venues={venues}
             cityName={cityName}
             domain={domain}
             timeZone={timeZone}
@@ -168,6 +171,7 @@ const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
           today={today}
           kind="agenda"
           organisers={organisers}
+          venues={venues}
           cityName={cityName}
           domain={domain}
           timeZone={timeZone}

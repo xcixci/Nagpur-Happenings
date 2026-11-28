@@ -1,0 +1,14 @@
+---
+import Page from '../layouts/Page.astro';
+import { city } from '../lib/city';
+
+const url = city.organiser_form_url.trim();
+if (url) return Astro.redirect(url);
+---
+
+<Page title={`List your community · ${city.name} Happenings`} description="The directory form is not open yet." noindex>
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+    <h1 class="font-serif text-3xl font-semibold">List your community</h1>
+    <p class="mt-3">The directory form is not open yet.</p>
+  </main>
+</Page>

@@ -84,7 +84,7 @@ export function compareEvents(
   return (a.title || '').localeCompare(b.title || '');
 }
 
-export function filterCategories(categories: CategoryRecord[], events: EventRecord[]): string[] {
+export function filterCategories(categories: CategoryRecord[], rows: { category: string }[]): string[] {
   const names: string[] = [];
   const seen = new Set<string>();
   for (const row of categories) {
@@ -93,13 +93,27 @@ export function filterCategories(categories: CategoryRecord[], events: EventReco
     seen.add(name);
     names.push(name);
   }
-  for (const event of events) {
-    const name = event.category.trim();
+  for (const row of rows) {
+    const name = row.category.trim();
     if (!name || seen.has(name)) continue;
     seen.add(name);
     names.push(name);
   }
   return names;
+}
+
+export function usedCategories(categories: CategoryRecord[], rows: { category: string }[]): string[] {
+  const present = new Set(rows.map((row) => row.category.trim()).filter(Boolean));
+  return filterCategories(categories, rows).filter((name) => present.has(name));
+}
+
+export function eventsFor(
+  events: EventRecord[],
+  field: 'organiser_id' | 'venue_id',
+  id: string,
+): EventRecord[] {
+  if (!id) return [];
+  return calendarEvents(events).filter((event) => event[field] === id);
 }
 
 function addMonths(ym: YearMonth, count: number): YearMonth {

@@ -64,7 +64,11 @@ const solid =
         <>
           <dt class="text-moss">Where</dt>
           <dd>
-            {model.whereName && <p>{model.whereName}</p>}
+            {model.whereName && (
+              <p>
+                {model.venueHref ? <a class="text-ink underline" href={model.venueHref}>{model.whereName}</a> : model.whereName}
+              </p>
+            )}
             {model.whereLine && <p>{model.whereLine}</p>}
             {model.address && <p>{model.address}</p>}
             {model.mapsHref && (
@@ -85,7 +89,11 @@ const solid =
         <>
           <dt class="text-moss">Organiser</dt>
           <dd>
-            {model.organiserName && <p>{model.organiserName}</p>}
+            {model.organiserName && (
+              <p>
+                {model.organiserHref ? <a class="text-ink underline" href={model.organiserHref}>{model.organiserName}</a> : model.organiserName}
+              </p>
+            )}
             {model.contact && (
               <p class="mt-1 break-words">
                 {model.contact.href

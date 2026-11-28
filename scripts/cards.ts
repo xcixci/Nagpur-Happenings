@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { city } from '../src/lib/city.ts';
 import { cardModel, type CardModel } from '../src/lib/format.ts';
+import { withLocalLogos } from '../src/lib/logos.ts';
 import type { EventRecord, OrganiserRecord } from '../src/lib/sheet-map.ts';
 
 const MAX_BYTES = 300 * 1024;
@@ -38,7 +39,11 @@ async function main(): Promise<void> {
     organisers?: OrganiserRecord[];
   };
   const events = snapshot.events ?? [];
-  const organisers = snapshot.organisers ?? [];
+  const organisers = withLocalLogos(snapshot.organisers ?? []).map((organiser) =>
+    organiser.logo_url.startsWith('/logos/')
+      ? { ...organiser, logo_url: pathToFileURL(resolve(root, 'public', organiser.logo_url.slice(1))).href }
+      : organiser,
+  );
   if (events.length === 0) {
     console.error(`data/${city.slug}/snapshot.json has no events`);
     process.exit(1);

@@ -1,6 +1,10 @@
 ---
 import Base from './Base.astro';
+import SponsorSlot from '../components/SponsorSlot.astro';
 import { city } from '../lib/city';
+import { cityToday } from '../lib/format';
+import { loadSnapshot } from '../lib/snapshot';
+import { liveSponsor } from '../lib/sponsors';
 import icon from '../../brand/logo/nh-icon.svg?url';
 
 interface Props {
@@ -16,21 +20,56 @@ interface Props {
 }
 
 const { credit } = city.footer;
+const siteSponsor = liveSponsor(loadSnapshot().sponsors, 'site', cityToday(city.timezone));
+const sponsorHref = `https://wa.me/${city.whatsapp_number}`;
 ---
 
 <Base {...Astro.props}>
   <slot name="head" slot="head" />
   <header class="border-b border-line">
-    <div class="mx-auto flex w-full max-w-5xl items-center px-4 py-3">
-      <a href="/" class="flex items-center gap-2.5 font-serif text-xl font-semibold text-ink no-underline">
+    <div class="site-header__bar mx-auto flex w-full max-w-5xl items-center justify-between gap-x-4 px-4 py-3">
+      <a href="/" class="flex shrink-0 items-center gap-2.5 font-serif text-xl font-semibold text-ink no-underline" aria-label={`${city.name} Happenings`}>
         <img src={icon} width="36" height="36" alt="" class="size-9" />
-        {city.name} Happenings
+        <span class="site-header__name whitespace-nowrap">{city.name} Happenings</span>
       </a>
+      <nav class="flex shrink-0 items-center gap-4 text-[0.9375rem] font-medium" aria-label="Sections">
+        <a class="inline-flex min-h-11 items-center whitespace-nowrap text-ink underline decoration-from-font underline-offset-2 hover:text-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/this-weekend/">This weekend</a>
+        <a class="inline-flex min-h-11 items-center whitespace-nowrap text-ink underline decoration-from-font underline-offset-2 hover:text-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/organisers/">Organisers</a>
+      </nav>
     </div>
   </header>
+  <script is:inline>
+    (function () {
+      var bar = document.querySelector('.site-header__bar');
+      var name = document.querySelector('.site-header__name');
+      if (!bar || !name) return;
+      function fit() {
+        name.classList.remove('is-hidden');
+        name.classList.toggle('is-hidden', bar.scrollWidth > bar.clientWidth + 1);
+      }
+      fit();
+      requestAnimationFrame(fit);
+      window.addEventListener('resize', fit);
+      window.addEventListener('load', fit);
+      if (document.fonts) document.fonts.ready.then(fit);
+    })();
+  </script>
+  {siteSponsor && <SponsorSlot sponsor={siteSponsor} variant="site" />}
   <slot />
   <footer class="mt-auto border-t border-line">
-    <div class="mx-auto w-full max-w-5xl px-4 py-8 text-moss">
+    <div class="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-8 text-moss">
+      <p>
+        <a class="text-ink underline" href="/organisers/">Organisers</a>
+        <span aria-hidden="true"> · </span>
+        <a class="text-ink underline" href="/venues/">Venues</a>
+        <span aria-hidden="true"> · </span>
+        <a class="text-ink underline" href="/this-weekend/">This weekend</a>
+      </p>
+      {!siteSponsor && (
+        <p>
+          <a class="text-ink underline" href={sponsorHref} target="_blank" rel="noopener noreferrer">Sponsor {city.name} Happenings</a>
+        </p>
+      )}
       <p>
         Made by <a class="text-ink underline" href={credit.site_url}>{credit.name}</a> · <a class="text-ink underline" href={credit.instagram_url} rel="noopener noreferrer">Instagram</a>
       </p>

@@ -3,6 +3,7 @@ import EventArticle from '../../../components/EventArticle.astro';
 import Page from '../../../layouts/Page.astro';
 import { city } from '../../../lib/city';
 import { eventPageModel } from '../../../lib/format';
+import { withLocalLogos } from '../../../lib/logos';
 import { loadSnapshot } from '../../../lib/snapshot';
 import type { EventRecord } from '../../../lib/sheet-map';
 
@@ -20,7 +21,7 @@ if (!Astro.site) throw new Error('Set site in astro.config');
 const snap = loadSnapshot();
 const model = eventPageModel({
   event,
-  organisers: snap.organisers,
+  organisers: withLocalLogos(snap.organisers),
   venues: snap.venues,
   days: snap.days,
   cityName: city.name,

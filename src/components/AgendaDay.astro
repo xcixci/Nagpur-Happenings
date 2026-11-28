@@ -1,7 +1,7 @@
 ---
 import EventCard from './EventCard.astro';
 import { dayHeading, dayLabel, dayPath } from '../lib/calendar';
-import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
+import type { EventRecord, OrganiserRecord, VenueRecord } from '../lib/sheet-map';
 
 interface Props {
   date: string;
@@ -10,12 +10,13 @@ interface Props {
   today: string;
   kind: 'agenda' | 'week';
   organisers: OrganiserRecord[];
+  venues: VenueRecord[];
   cityName: string;
   domain: string;
   timeZone: string;
 }
 
-const { date, names, events, today, kind, organisers, cityName, domain, timeZone } = Astro.props;
+const { date, names, events, today, kind, organisers, venues, cityName, domain, timeZone } = Astro.props;
 const label = dayLabel(date, today);
 const namedOnly = kind === 'agenda' && events.length === 0;
 ---
@@ -40,7 +41,7 @@ const namedOnly = kind === 'agenda' && events.length === 0;
     <ul class="event-list" data-event-list>
       {events.map((event) => (
         <li>
-          <EventCard event={event} organisers={organisers} cityName={cityName} domain={domain} timeZone={timeZone} />
+          <EventCard event={event} organisers={organisers} venues={venues} cityName={cityName} domain={domain} timeZone={timeZone} />
         </li>
       ))}
     </ul>

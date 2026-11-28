@@ -1,0 +1,117 @@
+---
+import EventSchedule from '../../components/EventSchedule.astro';
+import FilterBar from '../../components/FilterBar.astro';
+import Page from '../../layouts/Page.astro';
+import { eventsFor, usedCategories } from '../../lib/calendar';
+import { city } from '../../lib/city';
+import { cityToday, httpUrl } from '../../lib/format';
+import { loadSnapshot } from '../../lib/snapshot';
+import type { VenueRecord } from '../../lib/sheet-map';
+
+export function getStaticPaths() {
+  const snap = loadSnapshot();
+  return snap.venues.filter((venue) => venue.slug).map((venue) => ({
+    params: { slug: venue.slug },
+  }));
+}
+
+function mapsHref(venue: VenueRecord, cityName: string): string {
+  const direct = httpUrl(venue.maps_url);
+  if (direct) return direct;
+  const query = [venue.name, venue.address, venue.area, cityName].filter(Boolean).join(', ');
+  if (!query) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+const slug = Astro.params.slug;
+const snap = loadSnapshot();
+const venue = snap.venues.find((item) => item.slug === slug);
+if (!venue || !slug) throw new Error('Missing venue');
+
+const origin = Astro.site?.origin ?? `https://${city.domain}`;
+const pagePath = `/venues/${venue.slug}/`;
+const pageUrl = new URL(pagePath, origin).href;
+const today = cityToday(city.timezone);
+const events = eventsFor(snap.events, 'venue_id', venue.id);
+const categories = usedCategories(snap.categories, events);
+const maps = mapsHref(venue, city.name);
+const website = httpUrl(venue.website_url);
+const instagram = httpUrl(venue.instagram_url);
+const placeLine = [venue.area, city.name].filter(Boolean).join(', ');
+const summary = [venue.address, placeLine].filter(Boolean).join(', ') || `Events at ${venue.name} in ${city.name}.`;
+
+const place: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Place',
+  name: venue.name,
+  url: pageUrl,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: venue.address || undefined,
+    addressLocality: venue.area || city.name,
+    addressRegion: city.name,
+    addressCountry: 'IN',
+  },
+};
+if (maps) place.hasMap = maps;
+
+const breadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: `${city.name} Happenings`, item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: 'Venues', item: new URL('/venues/', origin).href },
+    { '@type': 'ListItem', position: 3, name: venue.name, item: pageUrl },
+  ],
+};
+---
+
+<Page title={`${venue.name} · ${city.name} Happenings`} description={summary} canonical={pageUrl} jsonLd={[place, breadcrumb]}>
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+    <p>
+      <a class="text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/venues/">← All venues</a>
+    </p>
+    <h1 class="mt-3 font-serif text-3xl font-semibold leading-tight text-balance sm:text-4xl">{venue.name}</h1>
+    {(venue.address || placeLine || maps) && (
+      <div class="mt-4">
+        {venue.address && <p>{venue.address}</p>}
+        {placeLine && <p class="text-moss">{placeLine}</p>}
+        {maps && (
+          <p class="mt-1">
+            <a class="text-ink underline" href={maps} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+          </p>
+        )}
+      </div>
+    )}
+    {(website || instagram) && (
+      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+        {website && (
+          <li><a class="text-ink underline" href={website} target="_blank" rel="noopener noreferrer">Website</a></li>
+        )}
+        {instagram && (
+          <li><a class="text-ink underline" href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a></li>
+        )}
+      </ul>
+    )}
+
+    <div class="calendar mt-8" data-calendar data-timezone={city.timezone} data-built-today={today}>
+      {events.length > 0 && <FilterBar categories={categories} />}
+      <div data-view data-empty-scope="for this venue">
+        <EventSchedule
+          events={events}
+          organisers={snap.organisers}
+          venues={snap.venues}
+          cityName={city.name}
+          domain={city.domain}
+          timeZone={city.timezone}
+        />
+        <p class="quiet-line" data-view-empty hidden>Nothing listed for this venue yet.</p>
+      </div>
+    </div>
+  </main>
+</Page>
+
+<script>
+  import { startCalendar } from '../../scripts/calendar';
+  startCalendar();
+</script>
