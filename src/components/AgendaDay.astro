@@ -1,0 +1,45 @@
+---
+import EventCard from './EventCard.astro';
+import { dayHeading, dayLabel } from '../lib/calendar';
+import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
+
+interface Props {
+  date: string;
+  names: string[];
+  events: EventRecord[];
+  today: string;
+  kind: 'agenda' | 'week';
+  organisers: OrganiserRecord[];
+  cityName: string;
+  domain: string;
+  timeZone: string;
+}
+
+const { date, names, events, today, kind, organisers, cityName, domain, timeZone } = Astro.props;
+const label = dayLabel(date, today);
+const namedOnly = kind === 'agenda' && events.length === 0;
+---
+
+<li
+  class:list={['agenda-day', date === today && 'agenda-day--today', events.length === 0 && 'agenda-day--quiet']}
+  data-day-group
+  data-date={date}
+  data-agenda-day={kind === 'agenda' ? '' : undefined}
+  data-week-day={kind === 'week' ? '' : undefined}
+  data-named-only={namedOnly ? '' : undefined}
+>
+  <h2 class="day-heading" data-day-heading data-label={label}>{dayHeading(date, today, events.length)}</h2>
+  {names.length > 0 && <p class="day-names">{names.join(', ')}</p>}
+  {events.length > 0 && (
+    <ul class="event-list" data-event-list>
+      {events.map((event) => (
+        <li>
+          <EventCard event={event} organisers={organisers} cityName={cityName} domain={domain} timeZone={timeZone} />
+        </li>
+      ))}
+    </ul>
+  )}
+  {kind === 'week' && (
+    <p class="quiet-line" data-quiet hidden={events.length > 0}>No events listed</p>
+  )}
+</li>

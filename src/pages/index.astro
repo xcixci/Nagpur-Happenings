@@ -1,24 +1,21 @@
 ---
-import Base from '../layouts/Base.astro';
+import CalendarHome from '../components/CalendarHome.astro';
+import Page from '../layouts/Page.astro';
 import { city } from '../lib/city';
+import { loadSnapshot } from '../lib/snapshot';
 
-const { credit } = city.footer;
+const snap = loadSnapshot();
+const title = `${city.name} Happenings`;
+const description = `A calendar of book clubs, workshops, meetups and community events in ${city.name}.`;
 ---
 
-<Base title={`${city.name} Happenings`}>
-  <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:py-20">
-    <p class="flex items-center gap-2 font-serif text-lg">
-      <span class="inline-block size-2 shrink-0 rounded-full bg-orange" aria-hidden="true"></span>
-      {city.name_local}
-    </p>
-    <h1 class="mt-3 font-serif text-4xl font-semibold leading-tight sm:text-5xl">
-      {city.name} Happenings
-    </h1>
-    <p class="mt-4 text-lg text-moss">{city.domain}</p>
+<Page title={title} description={description}>
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+    <CalendarHome
+      events={snap.events}
+      days={snap.days}
+      organisers={snap.organisers}
+      categories={snap.categories}
+    />
   </main>
-  <footer class="mx-auto w-full max-w-3xl px-4 py-8 text-moss">
-    <p>
-      Made by <a class="underline" href={credit.site_url}>{credit.name}</a> · <a class="underline" href={credit.instagram_url} rel="noopener noreferrer">Instagram</a>
-    </p>
-  </footer>
-</Base>
+</Page>

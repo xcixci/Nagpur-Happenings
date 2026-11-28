@@ -1,0 +1,43 @@
+---
+import EventArticle from '../../../components/EventArticle.astro';
+import Page from '../../../layouts/Page.astro';
+import { city } from '../../../lib/city';
+import { eventPageModel } from '../../../lib/format';
+import { loadSnapshot } from '../../../lib/snapshot';
+import type { EventRecord } from '../../../lib/sheet-map';
+
+export function getStaticPaths() {
+  const snap = loadSnapshot();
+  return snap.events.map((event) => ({ params: { slug: event.slug }, props: { event } }));
+}
+
+interface Props {
+  event: EventRecord;
+}
+
+const { event } = Astro.props;
+if (!Astro.site) throw new Error('Set site in astro.config');
+const snap = loadSnapshot();
+const model = eventPageModel({
+  event,
+  organisers: snap.organisers,
+  venues: snap.venues,
+  days: snap.days,
+  cityName: city.name,
+  citySlug: city.slug,
+  timeZone: city.timezone,
+  origin: Astro.site.origin,
+});
+---
+
+<Page
+  title={`${model.socialTitle} · ${city.name} Happenings`}
+  socialTitle={model.socialTitle}
+  description={model.summary}
+  image={model.cardUrl}
+  imageAlt={`${model.socialTitle}: ${model.summary}`}
+  canonical={model.pageUrl}
+  jsonLd={model.jsonLd}
+>
+  <EventArticle model={model} cityName={city.name} />
+</Page>

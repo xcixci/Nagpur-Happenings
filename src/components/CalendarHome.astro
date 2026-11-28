@@ -1,0 +1,170 @@
+---
+import AgendaDay from './AgendaDay.astro';
+import EventCard from './EventCard.astro';
+import FilterBar from './FilterBar.astro';
+import MonthBoard from './MonthBoard.astro';
+import MonthNav from './MonthNav.astro';
+import TimeGroups from './TimeGroups.astro';
+import { city } from '../lib/city';
+import {
+  calendarEvents,
+  datesFrom,
+  dayNames,
+  eventsOn,
+  filterCategories,
+  monthKey,
+  monthName,
+  monthPath,
+  neighbor,
+  rangeLabel,
+  startMonthKey,
+  visibleMonths,
+  weekendRange,
+  type TimedEvent,
+} from '../lib/calendar';
+import { cityToday } from '../lib/format';
+import type { DayRecord, EventRecord, OrganiserRecord } from '../lib/sheet-map';
+
+interface Props {
+  events: EventRecord[];
+  days: DayRecord[];
+  organisers: OrganiserRecord[];
+  categories: { category: string; sub_category: string }[];
+}
+
+const { events, days, organisers, categories } = Astro.props;
+const listed = calendarEvents(events);
+const today = cityToday(city.timezone);
+const months = visibleMonths(listed, today);
+const monthKeys = months.map((ym) => monthKey(ym.year, ym.month));
+const timed: TimedEvent[] = listed.map((event) => ({
+  id: event.id,
+  date: event.date,
+  start_time: event.start_time,
+  end_time: event.end_time,
+  status: event.status,
+}));
+const startKey = startMonthKey(timed, monthKeys, city.timezone);
+const start = months.find((ym) => monthKey(ym.year, ym.month) === startKey) ?? months[0];
+const prev = start ? neighbor(months, start, -1) : null;
+const next = start ? neighbor(months, start, 1) : null;
+const link = (ym: { year: number; month: number } | null) =>
+  ym ? { href: monthPath(ym), label: `${monthName(ym)} ${ym.year}` } : null;
+const names = filterCategories(categories, listed);
+const weekend = weekendRange(today);
+const weekDates = datesFrom(today, datesFrom(today, '9999-12-31')[6] || today);
+const weekendDates = datesFrom(weekend.from, weekend.to);
+const cardProps = { organisers, cityName: city.name, domain: city.domain, timeZone: city.timezone };
+---
+
+<div
+  class="calendar"
+  data-calendar
+  data-home="true"
+  data-timezone={city.timezone}
+  data-built-today={today}
+  data-built-month={start ? monthKey(start.year, start.month) : ''}
+  data-months={monthKeys.join(',')}
+>
+  <p class="font-serif text-lg">{city.name_local}</p>
+  <div class="cal-toolbar mt-2">
+    <h1 class="cal-title">
+      <span class="cal-title__month" data-month-name>{start ? monthName(start) : ''}</span>
+      <span class="cal-title__year" data-year-name>{start?.year}</span>
+    </h1>
+    <MonthNav prev={link(prev)} next={link(next)} />
+  </div>
+
+  <div class="quick" role="radiogroup" aria-label="Calendar view">
+    <input class="sr-only" type="radio" name="cal-view" id="cal-view-today" />
+    <label class="quick__btn" for="cal-view-today">Today</label>
+    <input class="sr-only" type="radio" name="cal-view" id="cal-view-weekend" />
+    <label class="quick__btn" for="cal-view-weekend">This weekend</label>
+    <input class="sr-only" type="radio" name="cal-view" id="cal-view-week" />
+    <label class="quick__btn" for="cal-view-week">Next 7 days</label>
+    <input class="sr-only" type="radio" name="cal-view" id="cal-view-month" checked />
+    <label class="quick__btn" for="cal-view-month">Month</label>
+  </div>
+
+  <FilterBar categories={names} />
+
+  <div class="cal-view cal-view-today" data-view data-view-today data-empty-scope="for today">
+    <p class="view-range" data-range>{rangeLabel(today, today)}</p>
+    <div data-view-body>
+      <TimeGroups events={eventsOn(listed, today)} {...cardProps} />
+    </div>
+    <p class="quiet-line" data-view-empty hidden={eventsOn(listed, today).length > 0}>Nothing listed for today yet.</p>
+  </div>
+
+  <div
+    class="cal-view cal-view-weekend"
+    data-view
+    data-view-weekend
+    data-empty-scope="for this weekend"
+    data-span-days={weekend.from === weekend.to ? undefined : ''}
+  >
+    <p class="view-range" data-range>{rangeLabel(weekend.from, weekend.to)}</p>
+    {weekend.from === weekend.to ? (
+      <div data-view-body>
+        <TimeGroups events={eventsOn(listed, weekend.from)} {...cardProps} />
+      </div>
+    ) : (
+      <ol class="agenda-days" data-view-body>
+        {weekendDates.map((date) => (
+          <AgendaDay
+            date={date}
+            names={dayNames(days, date)}
+            events={eventsOn(listed, date)}
+            today={today}
+            kind="week"
+            {...cardProps}
+          />
+        ))}
+      </ol>
+    )}
+    <p class="quiet-line" data-view-empty hidden>Nothing listed for this weekend yet.</p>
+  </div>
+
+  <div class="cal-view cal-view-week" data-view data-view-week data-span-days data-empty-scope="for the next 7 days">
+    <p class="view-range" data-range>{rangeLabel(weekDates[0] || today, weekDates[weekDates.length - 1] || today)}</p>
+    <ol class="agenda-days" data-view-body>
+      {weekDates.map((date) => (
+        <AgendaDay
+          date={date}
+          names={dayNames(days, date)}
+          events={eventsOn(listed, date)}
+          today={today}
+          kind="week"
+          {...cardProps}
+        />
+      ))}
+    </ol>
+    <p class="quiet-line" data-view-empty hidden>Nothing listed for the next 7 days yet.</p>
+  </div>
+
+  <div class="cal-view cal-view-month">
+    {months.map((ym) => (
+      <MonthBoard
+        year={ym.year}
+        month={ym.month}
+        events={listed}
+        days={days}
+        today={today}
+        hidden={monthKey(ym.year, ym.month) !== startKey}
+        {...cardProps}
+      />
+    ))}
+  </div>
+
+  <ul hidden data-named-days>
+    {days.map((day) => <li data-date={day.date}>{day.name}</li>)}
+  </ul>
+  <template id="calendar-card-pool">
+    {listed.map((event) => <EventCard event={event} {...cardProps} />)}
+  </template>
+</div>
+
+<script>
+  import { startCalendar } from '../scripts/calendar';
+  startCalendar();
+</script>

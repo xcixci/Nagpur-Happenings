@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "astro dev",
     "snapshot": "node --experimental-strip-types scripts/snapshot.ts",
-    "build": "npm run snapshot && astro build",
+    "cards": "node --experimental-strip-types scripts/cards.ts",
+    "build": "npm run snapshot && npm run cards && astro build",
     "preview": "astro preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",
     "astro": "^7.4.13",
     "tailwindcss": "^4.3.5"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
   }
 }

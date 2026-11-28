@@ -1,0 +1,160 @@
+---
+import EventMedia from './EventMedia.astro';
+import type { EventPageModel } from '../lib/format';
+
+interface Props {
+  model: EventPageModel;
+  cityName: string;
+}
+
+const { model, cityName } = Astro.props;
+const priceBadge = model.event.price_type === 'free'
+  ? 'Free entry'
+  : model.event.ticket_price != null && model.entry.includes('₹')
+    ? model.entry.slice(model.entry.indexOf('₹'))
+    : 'Paid';
+const line =
+  'inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-4 font-medium text-ink no-underline hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+const solid =
+  'inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-ink px-4 font-medium text-on-ink no-underline hover:bg-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:w-auto';
+---
+
+<article class="mx-auto w-full max-w-5xl lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-4 lg:py-10">
+  <EventMedia
+    mode={model.media.mode}
+    src={model.media.src}
+    alt={model.media.alt}
+    logo={model.media.logo}
+    logoAlt={model.media.logoAlt}
+    tile={model.media.tile}
+    quiet={model.quiet}
+    weekday={model.badge.weekday}
+    day={model.badge.day}
+    month={model.badge.month}
+    price={model.entry ? priceBadge : ''}
+    priceKind={model.event.price_type === 'free' ? 'free' : model.event.price_type === 'paid' ? 'paid' : ''}
+    frameClass="lg:rounded-lg"
+  />
+
+  <div class="min-w-0 px-4 py-6 lg:px-0 lg:py-0">
+    <p class="mb-3">
+      <a class="text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" href="/">← All events</a>
+    </p>
+    {model.categoryLine && <p class="text-sm font-semibold tracking-wide text-moss">{model.categoryLine}</p>}
+    {(model.featured || model.alcohol || model.who.length > 0) && (
+      <ul class="mt-3 flex flex-wrap gap-2">
+        {model.featured && <li class="rounded-full bg-paper-deep px-3 py-1 text-sm font-medium">Featured</li>}
+        {model.alcohol && <li class="rounded-full bg-paper-deep px-3 py-1 text-sm font-medium">Alcohol served</li>}
+        {model.who.map((tag) => <li class="rounded-full bg-paper-deep px-3 py-1 text-sm">{tag}</li>)}
+      </ul>
+    )}
+    <h1 class:list={['mt-3 font-serif text-3xl font-semibold leading-tight text-balance sm:text-4xl', model.cancelled && 'text-moss line-through decoration-2']}>
+      {model.event.title}
+    </h1>
+    {model.cancelled && <p class="mt-3 font-medium">This event has been cancelled.</p>}
+    {model.ended && <p class="mt-3 text-moss">This event has ended.</p>}
+    {model.lede && <p class="mt-4 whitespace-pre-line text-lg leading-relaxed">{model.lede}</p>}
+
+    <dl class="mt-6 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-4">
+      <dt class="text-moss">When</dt>
+      <dd>
+        <p>{model.whenDate}</p>
+        {model.whenTime && <p>{model.whenTime}</p>}
+        {model.dayLabel && <p class="text-moss">{model.dayLabel}</p>}
+      </dd>
+      {(model.whereName || model.whereLine) && (
+        <>
+          <dt class="text-moss">Where</dt>
+          <dd>
+            {model.whereName && <p>{model.whereName}</p>}
+            {model.whereLine && <p>{model.whereLine}</p>}
+            {model.address && <p>{model.address}</p>}
+            {model.mapsHref && (
+              <p class="mt-1">
+                <a class="text-ink underline" href={model.mapsHref} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+              </p>
+            )}
+          </dd>
+        </>
+      )}
+      {model.entry && (
+        <>
+          <dt class="text-moss">Entry</dt>
+          <dd>{model.entry}</dd>
+        </>
+      )}
+      {(model.organiserName || model.contact) && (
+        <>
+          <dt class="text-moss">Organiser</dt>
+          <dd>
+            {model.organiserName && <p>{model.organiserName}</p>}
+            {model.contact && (
+              <p class="mt-1 break-words">
+                {model.contact.href
+                  ? <a class="text-ink underline" href={model.contact.href} target={model.contact.external ? '_blank' : undefined} rel={model.contact.external ? 'noopener noreferrer' : undefined}>{model.contact.label}</a>
+                  : model.contact.label}
+              </p>
+            )}
+          </dd>
+        </>
+      )}
+    </dl>
+
+    <div class="mt-6 flex flex-col items-start gap-2 border-t border-line pt-5">
+      {model.registration && (
+        <a class={solid} href={model.registration.href} target="_blank" rel="noopener noreferrer" data-umami-event="register_click" data-umami-event-event_id={model.event.id}>
+          {model.registration.label}
+        </a>
+      )}
+      {model.registrationNote && <p>{model.registrationNote}</p>}
+      <div class="flex flex-wrap gap-2">
+        <a class={line} href={model.whatsappHref} target="_blank" rel="noopener noreferrer" data-umami-event="whatsapp_click" data-umami-event-event_id={model.event.id}>
+          WhatsApp
+        </a>
+        <button
+          class={line}
+          type="button"
+          hidden
+          data-native-share
+          data-share-title={model.shareTitle}
+          data-share-text={model.shareBody}
+          data-share-url={model.pageUrl}
+          data-umami-event="share_click"
+          data-umami-event-event_id={model.event.id}
+        >
+          Share
+        </button>
+      </div>
+      {model.canCalendar && (
+        <details class="w-full">
+          <summary class={`${line} cursor-pointer`}>Add to calendar</summary>
+          <div class="mt-2 flex flex-col items-start gap-2">
+            <a class={line} href={model.googleHref} target="_blank" rel="noopener noreferrer" data-umami-event="calendar_add" data-umami-event-event_id={model.event.id}>
+              Google Calendar
+            </a>
+            <a class={line} href={model.icsPath} download={`${model.event.slug}.ics`} data-umami-event="calendar_add" data-umami-event-event_id={model.event.id}>
+              Apple, Outlook or Proton (.ics)
+            </a>
+          </div>
+        </details>
+      )}
+    </div>
+
+    {model.showAbout && (
+      <div class="mt-8 border-t border-line pt-5">
+        <h2 class="font-serif text-2xl font-semibold">About this event</h2>
+        {model.about.map((paragraph) => <p class="mt-3 whitespace-pre-line leading-relaxed">{paragraph}</p>)}
+      </div>
+    )}
+
+    <p class="mt-8 max-w-prose text-sm leading-relaxed text-moss">
+      Listed for information only. {cityName} Happenings does not organise this event or handle bookings and payments.
+      Details can change, so confirm with the organiser before you go.
+    </p>
+  </div>
+</article>
+
+<script>
+  import { startEventPage } from '../scripts/event-page';
+  startEventPage();
+</script>

@@ -1,0 +1,19 @@
+---
+interface Props {
+  prev: { href: string; label: string } | null;
+  next: { href: string; label: string } | null;
+}
+
+const { prev, next } = Astro.props;
+---
+
+<nav class="month-nav" aria-label="Months">
+  <a data-prev href={prev?.href} hidden={!prev} aria-label={prev ? `Previous month, ${prev.label}` : undefined}>
+    <span aria-hidden="true">←</span>
+  </a>
+  <span class="month-nav__off" data-prev-off hidden={!!prev} aria-hidden="true">←</span>
+  <a data-next href={next?.href} hidden={!next} aria-label={next ? `Next month, ${next.label}` : undefined}>
+    <span aria-hidden="true">→</span>
+  </a>
+  <span class="month-nav__off" data-next-off hidden={!!next} aria-hidden="true">→</span>
+</nav>

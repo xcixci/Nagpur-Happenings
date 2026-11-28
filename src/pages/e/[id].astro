@@ -1,0 +1,47 @@
+---
+import Page from '../../layouts/Page.astro';
+import { city } from '../../lib/city';
+import { eventPageModel } from '../../lib/format';
+import { loadSnapshot } from '../../lib/snapshot';
+import type { EventRecord } from '../../lib/sheet-map';
+
+export function getStaticPaths() {
+  return loadSnapshot().events.map((event) => ({ params: { id: event.id }, props: { event } }));
+}
+
+interface Props {
+  event: EventRecord;
+}
+
+const { event } = Astro.props;
+if (!Astro.site) throw new Error('Set site in astro.config');
+const snap = loadSnapshot();
+const model = eventPageModel({
+  event,
+  organisers: snap.organisers,
+  venues: snap.venues,
+  days: snap.days,
+  cityName: city.name,
+  citySlug: city.slug,
+  timeZone: city.timezone,
+  origin: Astro.site.origin,
+});
+---
+
+<Page
+  title={`${model.socialTitle} · ${city.name} Happenings`}
+  socialTitle={model.socialTitle}
+  description={model.summary}
+  image={model.cardUrl}
+  imageAlt={`${model.socialTitle}: ${model.summary}`}
+  canonical={model.pageUrl}
+  ogUrl={model.shortUrl}
+  noindex
+>
+  <meta slot="head" http-equiv="refresh" content={`0;url=${model.pageUrl}`} />
+  <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
+    <p class="text-lg">
+      <a class="text-ink underline" href={model.pageUrl}>{model.socialTitle}</a>
+    </p>
+  </main>
+</Page>

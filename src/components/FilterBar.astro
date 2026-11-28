@@ -1,0 +1,20 @@
+---
+interface Props {
+  categories: string[];
+}
+
+const { categories } = Astro.props;
+---
+
+<div class="filter-row">
+  <div class="filters" role="group" aria-label="Filter events by category">
+    <button type="button" class="pill" data-filter-all aria-pressed="true">All events</button>
+    {categories.map((category) => (
+      <button type="button" class="pill" data-filter-cat={category} aria-pressed="false">{category}</button>
+    ))}
+  </div>
+  <button type="button" class="pill pill--free" data-free-only aria-pressed="false">Free only</button>
+</div>
+<noscript>
+  <p class="filter-note">The category filter and Free only switch need JavaScript. Every event is listed.</p>
+</noscript>

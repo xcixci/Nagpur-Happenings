@@ -26,6 +26,9 @@ It lists events. It never sells tickets.
 - Small islands of plain JS for filters, share and add-to-calendar. No React unless asked.
 - Hosting: Cloudflare Pages. GitHub Actions builds on every push and every hour
   (to pick up new events), then deploys with Wrangler.
+- Step 7 must rebuild the site every day just after midnight IST, so the
+  no-JavaScript calendar matches the day in Asia/Kolkata. With JavaScript, today
+  is worked out in the visitor's browser.
 - Analytics: Umami, website ID from the city config.
 
 ## One codebase, many cities
@@ -95,7 +98,9 @@ Rules:
 - The build makes slugs. Nobody types them. Event slug = title (first 6 words) + date +
   ID: `book-club-evening-28-nov-2026-nh025`. The ID at the end is what keeps old links
   working when an event is renamed or postponed.
-- Only `published` events and `listed` organisers appear anywhere: pages, feeds, sitemap.
+- Cancelled events stay on the calendar and on their event page, in their place,
+  with the title struck through and marked Cancelled. Drafts never appear.
+- Only `listed` organisers appear anywhere: pages, feeds, sitemap.
 - Events are alcohol-free unless `vibe_tags` contains "Alcohol served".
 - If an event's organiser or venue isn't in its tab yet, show the plain name without a
   link. Never fail the build over it.
@@ -121,6 +126,9 @@ Rules:
 - Past months, weeks and days are the archive. They are public, linked from the footer
   ("Past events"), not from the main menu.
 - `/events/<slug>/`: one page per event. Past events keep their page, marked as ended.
+  A small "← All events" link above the category line goes to the home page. Never
+  `history.back()`: someone arriving from WhatsApp has no page to return to. After
+  Step 4b, this link points to the event's day page ("← Sunday, 29 November").
 - `/e/<ID>/` stays the short share link and redirects to the event page. Links already
   shared on WhatsApp (e.g. `/e/NH-019/`) must keep working.
 - `/organisers/` and `/organisers/<slug>/` (upcoming and past events). Each organiser

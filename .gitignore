@@ -4,3 +4,4 @@ tools/previews/package-lock.json
 node_modules/
 dist/
 .astro/
+public/cards/

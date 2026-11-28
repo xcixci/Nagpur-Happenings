@@ -1,0 +1,88 @@
+---
+import EventMedia from './EventMedia.astro';
+import { cardModel, dateBadge, hasEnded, imageUrl, isQuiet } from '../lib/format';
+import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
+
+interface Props {
+  event: EventRecord;
+  organisers: OrganiserRecord[];
+  cityName: string;
+  domain: string;
+  timeZone: string;
+}
+
+const { event, organisers, cityName, domain, timeZone } = Astro.props;
+const model = cardModel(event, organisers, cityName, domain, timeZone);
+const badge = dateBadge(event.date);
+const cancelled = event.status === 'cancelled';
+const quiet = isQuiet(event);
+const ended = hasEnded(event, timeZone);
+const mode = model.imageKind === 'poster' ? 'poster' : model.imageKind === 'logo' ? 'logo' : 'tile';
+const organiser = event.organiser_id ? organisers.find((item) => item.id === event.organiser_id) : undefined;
+const logo = organiser?.logo_url ? imageUrl(organiser.logo_url) : '';
+---
+
+<a
+  class="event-card"
+  href={`/events/${event.slug}/`}
+  data-event
+  data-card-id={event.id}
+  data-date={event.date}
+  data-start={event.start_time}
+  data-end={event.end_time}
+  data-category={event.category}
+  data-price={event.price_type}
+  data-status={event.status}
+>
+  <EventMedia
+    mode={mode}
+    src={model.image}
+    alt={mode === 'poster' ? `Poster for ${event.title}` : mode === 'logo' ? `${event.organiser_name || 'Organiser'} logo` : ''}
+    logo={mode === 'poster' ? logo : ''}
+    logoAlt={`${event.organiser_name || 'Organiser'} logo`}
+    tile={model.tile}
+    quiet={quiet}
+    weekday={badge.weekday}
+    day={badge.day}
+    month={badge.month}
+    price={model.badge}
+    priceKind={model.badgeKind}
+    size="card"
+    frameClass="rounded-lg"
+  />
+  <div class="min-w-0">
+    {event.category && <p class="text-sm font-semibold text-moss">{event.category}</p>}
+    {cancelled && <p class="text-sm font-medium">Cancelled</p>}
+    <p class="text-sm text-moss" data-ended hidden={!ended}>Ended</p>
+    {event.featured && !cancelled && !quiet && <p class="text-sm font-medium">Featured</p>}
+    <p class:list={['event-card__title font-serif text-xl font-semibold leading-tight line-clamp-2', cancelled && 'text-moss line-through decoration-2']}>
+      {event.title}
+    </p>
+    {model.when && <p class="mt-1 text-sm">{model.when}</p>}
+    {model.where && <p class="text-sm text-moss">{model.where}</p>}
+    {model.by && <p class="text-sm text-moss">{model.by}</p>}
+    {event.description.trim() && <p class="mt-1 line-clamp-2 text-sm text-moss">{event.description.trim()}</p>}
+  </div>
+</a>
+
+<style>
+  .event-card {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--color-line);
+    color: inherit;
+    text-decoration: none;
+  }
+  .event-card:hover .event-card__title,
+  .event-card:focus-visible .event-card__title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .event-card:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+</style>

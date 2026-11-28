@@ -1,0 +1,39 @@
+---
+import Base from './Base.astro';
+import { city } from '../lib/city';
+import icon from '../../brand/logo/nh-icon.svg?url';
+
+interface Props {
+  title: string;
+  socialTitle?: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  canonical?: string;
+  ogUrl?: string;
+  noindex?: boolean;
+  jsonLd?: unknown[];
+}
+
+const { credit } = city.footer;
+---
+
+<Base {...Astro.props}>
+  <slot name="head" slot="head" />
+  <header class="border-b border-line">
+    <div class="mx-auto flex w-full max-w-5xl items-center px-4 py-3">
+      <a href="/" class="flex items-center gap-2.5 font-serif text-xl font-semibold text-ink no-underline">
+        <img src={icon} width="36" height="36" alt="" class="size-9" />
+        {city.name} Happenings
+      </a>
+    </div>
+  </header>
+  <slot />
+  <footer class="mt-auto border-t border-line">
+    <div class="mx-auto w-full max-w-5xl px-4 py-8 text-moss">
+      <p>
+        Made by <a class="text-ink underline" href={credit.site_url}>{credit.name}</a> · <a class="text-ink underline" href={credit.instagram_url} rel="noopener noreferrer">Instagram</a>
+      </p>
+    </div>
+  </footer>
+</Base>

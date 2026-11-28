@@ -1,0 +1,84 @@
+---
+import FilterBar from '../../components/FilterBar.astro';
+import MonthBoard from '../../components/MonthBoard.astro';
+import MonthNav from '../../components/MonthNav.astro';
+import Page from '../../layouts/Page.astro';
+import { city } from '../../lib/city';
+import {
+  calendarEvents,
+  filterCategories,
+  monthKey,
+  monthName,
+  monthPath,
+  neighbor,
+  visibleMonths,
+  type YearMonth,
+} from '../../lib/calendar';
+import { cityToday } from '../../lib/format';
+import { loadSnapshot } from '../../lib/snapshot';
+
+export function getStaticPaths() {
+  const snap = loadSnapshot();
+  const today = cityToday(city.timezone);
+  return visibleMonths(snap.events, today).map((ym) => ({
+    params: { month: monthKey(ym.year, ym.month) },
+    props: { year: ym.year, month: ym.month },
+  }));
+}
+
+interface Props {
+  year: number;
+  month: number;
+}
+
+const { year, month } = Astro.props;
+const snap = loadSnapshot();
+const today = cityToday(city.timezone);
+const listed = calendarEvents(snap.events);
+const months = visibleMonths(listed, today);
+const current: YearMonth = { year, month };
+const name = monthName(current);
+const heading = `Events in ${city.name}, ${name} ${year}`;
+const link = (ym: YearMonth | null) => (ym ? { href: monthPath(ym), label: `${monthName(ym)} ${ym.year}` } : null);
+const origin = Astro.site?.origin ?? `https://${city.domain}`;
+const pageUrl = new URL(Astro.url.pathname, origin).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: `${city.name} Happenings`, item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: `${name} ${year}`, item: pageUrl },
+  ],
+};
+---
+
+<Page title={heading} description={heading} jsonLd={[jsonLd]}>
+  <main
+    class="calendar mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+    data-calendar
+    data-timezone={city.timezone}
+    data-built-today={today}
+  >
+    <div class="cal-toolbar">
+      <h1 class="max-w-3xl font-serif text-3xl font-semibold leading-tight sm:text-4xl">{heading}</h1>
+      <MonthNav prev={link(neighbor(months, current, -1))} next={link(neighbor(months, current, 1))} />
+    </div>
+    <FilterBar categories={filterCategories(snap.categories, listed)} />
+    <MonthBoard
+      year={year}
+      month={month}
+      events={listed}
+      days={snap.days}
+      organisers={snap.organisers}
+      cityName={city.name}
+      domain={city.domain}
+      timeZone={city.timezone}
+      today={today}
+    />
+  </main>
+</Page>
+
+<script>
+  import { startCalendar } from '../../scripts/calendar';
+  startCalendar();
+</script>

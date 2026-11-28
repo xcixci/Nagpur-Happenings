@@ -1,0 +1,29 @@
+---
+import EventCard from './EventCard.astro';
+import { groupByStart, timeHeading } from '../lib/calendar';
+import type { EventRecord, OrganiserRecord } from '../lib/sheet-map';
+
+interface Props {
+  events: EventRecord[];
+  organisers: OrganiserRecord[];
+  cityName: string;
+  domain: string;
+  timeZone: string;
+}
+
+const { events, organisers, cityName, domain, timeZone } = Astro.props;
+const groups = groupByStart(events);
+---
+
+{groups.map((group) => (
+  <section data-time-group>
+    <h2 class="time-heading" data-time-heading data-time={group.time}>{timeHeading(group)}</h2>
+    <ul class="event-list">
+      {group.events.map((event) => (
+        <li>
+          <EventCard event={event} organisers={organisers} cityName={cityName} domain={domain} timeZone={timeZone} />
+        </li>
+      ))}
+    </ul>
+  </section>
+))}

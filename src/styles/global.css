@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./calendar.css";
 
 @theme {
   --font-sans: "Mukta", "Segoe UI", system-ui, sans-serif;
@@ -150,5 +151,13 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+  }
+
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
   }
 }

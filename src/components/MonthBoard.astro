@@ -1,0 +1,165 @@
+---
+import AgendaDay from './AgendaDay.astro';
+import {
+  MAX_CHIPS,
+  MAX_DOTS,
+  countLabel,
+  monthAgenda,
+  monthGrid,
+  monthKey,
+  monthName,
+  splitAgenda,
+  weekdayHeaders,
+} from '../lib/calendar';
+import { clockTime } from '../lib/format';
+import type { DayRecord, EventRecord, OrganiserRecord } from '../lib/sheet-map';
+
+interface Props {
+  year: number;
+  month: number;
+  events: EventRecord[];
+  days: DayRecord[];
+  organisers: OrganiserRecord[];
+  cityName: string;
+  domain: string;
+  timeZone: string;
+  today: string;
+  hidden?: boolean;
+}
+
+const {
+  year,
+  month,
+  events,
+  days,
+  organisers,
+  cityName,
+  domain,
+  timeZone,
+  today,
+  hidden = false,
+} = Astro.props;
+const key = monthKey(year, month);
+const name = monthName({ year, month });
+const cells = monthGrid(year, month, events, days);
+const agenda = monthAgenda(year, month, events, days);
+const parts = splitAgenda(agenda, today, key);
+const headers = weekdayHeaders();
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+---
+
+<div data-month-panel data-month={key} hidden={hidden}>
+  <div class="cal">
+    <ol class="cal__weekdays" aria-hidden="true">
+      {headers.map((header) => (
+        <li class:list={[header.weekend && 'is-weekend']}>
+          <span class="wd-full">{header.short}</span>
+          <span class="wd-short">{header.letter}</span>
+        </li>
+      ))}
+    </ol>
+    <ol class="cal__grid" aria-label={`${name} ${year}`}>
+      {cells.map((cell) => {
+        if (!cell.inMonth) return <li class="day day--outside" aria-hidden="true"></li>;
+        const isToday = cell.date === today;
+        const past = cell.date < today;
+        const weekend = cell.weekday === 0 || cell.weekday === 6;
+        const extra = cell.events.length - MAX_CHIPS;
+        return (
+          <li
+            class:list={['day', weekend && 'day--weekend', isToday && 'day--today', past && 'day--past', cell.events.length > 0 && 'day--has-events']}
+            data-day
+            data-date={cell.date}
+            aria-current={isToday ? 'date' : undefined}
+          >
+            <div class="day__head">
+              <span class="day__num" aria-hidden="true">{cell.day}</span>
+              {cell.names.length > 0 && (
+                <span class="day__label" aria-hidden="true" title={cell.names.join(', ')}>{cell.names.join(', ')}</span>
+              )}
+            </div>
+            <p class="sr-only">
+              {weekdays[cell.weekday]} {cell.day} {name}
+              <span data-today-flag hidden={!isToday}>, today</span>
+              {cell.names.length > 0 && `, ${cell.names.join(', ')}`}
+              {', '}
+              <span data-day-count>{countLabel(cell.events.length)}</span>
+            </p>
+            {cell.events.length > 0 && (
+              <ul class="day__events">
+                {cell.events.map((event, index) => (
+                  <li
+                    class="day__chip"
+                    data-event
+                    data-category={event.category}
+                    data-price={event.price_type}
+                    hidden={index >= MAX_CHIPS}
+                  >
+                    <a
+                      class:list={['chip', event.status === 'cancelled' && 'chip--cancelled', event.featured && event.status !== 'cancelled' && 'chip--featured']}
+                      href={`/events/${event.slug}/`}
+                    >
+                      {clockTime(event.start_time) && <span class="chip__time">{clockTime(event.start_time)}</span>}
+                      <span class="chip__title">{event.title}</span>
+                      {event.status === 'cancelled' && <span class="sr-only">, cancelled</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p class="day__more" data-more hidden={extra <= 0}>+{Math.max(extra, 0)} more</p>
+            {cell.events.length > 0 && (
+              <span class="day__dots" aria-hidden="true">
+                {cell.events.map((event, index) => (
+                  <i
+                    class:list={['dot', event.status === 'cancelled' && 'dot--cancelled']}
+                    data-dot
+                    data-category={event.category}
+                    data-price={event.price_type}
+                    hidden={index >= MAX_DOTS}
+                  ></i>
+                ))}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+  <p class="month-empty" data-month-empty data-month-label={name} hidden></p>
+  <div class="agenda">
+    <details class="earlier" data-earlier hidden={parts.earlier.length === 0}>
+      <summary>Earlier in {name}</summary>
+      <ol class="agenda-days" data-earlier-list>
+        {parts.earlier.map((day) => (
+          <AgendaDay
+            date={day.date}
+            names={day.names}
+            events={day.events}
+            today={today}
+            kind="agenda"
+            organisers={organisers}
+            cityName={cityName}
+            domain={domain}
+            timeZone={timeZone}
+          />
+        ))}
+      </ol>
+    </details>
+    <ol class="agenda-days" data-later-list>
+      {parts.later.map((day) => (
+        <AgendaDay
+          date={day.date}
+          names={day.names}
+          events={day.events}
+          today={today}
+          kind="agenda"
+          organisers={organisers}
+          cityName={cityName}
+          domain={domain}
+          timeZone={timeZone}
+        />
+      ))}
+    </ol>
+  </div>
+</div>
